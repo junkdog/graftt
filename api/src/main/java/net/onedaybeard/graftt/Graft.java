@@ -26,7 +26,7 @@ public final class Graft {
     /**
      * Mock to keep the compiler happy when you need to reference
      * fields or methods in the target class. Mocked references point
-     * to target class after transplant.
+     * to recipient class after transplant.
      */
     @Documented
     @Retention(CLASS)
@@ -34,9 +34,9 @@ public final class Graft {
     public @interface Mock {}
 
     /**
-     * Transplant the compiled bytecode over to the target class,
-     * translating any references from so that they point to the target
-     * class when transplanted.
+     * Transplant the compiled bytecode over to the recipient class,
+     * translating any references so that they point to the target
+     * class once transplanted.
      */
     @Documented
     @Retention(CLASS)
