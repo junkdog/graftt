@@ -80,7 +80,7 @@ fun ClassNode.graftableMethods() =
 fun readTargetType(donor: ClassNode): Result<Type, Msg> {
     return donor
         .invisibleAnnotations.toResultOr { Msg.None }
-        .andThen { it.findAnnotation<Graft.Target>() }
+        .andThen { it.findAnnotation<Graft.Recipient>() }
         .andThen { it.get<Type>("value") }
         .mapSafeError { Msg.MissingGraftTargetAnnotation(donor) }
 }

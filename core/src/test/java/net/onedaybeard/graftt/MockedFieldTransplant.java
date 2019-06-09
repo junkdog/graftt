@@ -1,6 +1,6 @@
 package net.onedaybeard.graftt;
 
-@Graft.Target(MockedField.class)
+@Graft.Recipient(MockedField.class)
 public class MockedFieldTransplant {
 
     @Graft.Mock

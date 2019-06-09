@@ -1,6 +1,6 @@
 package net.onedaybeard.graftt;
 
-@Graft.Target(SingleClassMethod.class)
+@Graft.Recipient(SingleClassMethod.class)
 public class SingleClassMethodTransplant {
     @Graft.Fuse
     private void yolo() {

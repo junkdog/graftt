@@ -1,6 +1,6 @@
 package net.onedaybeard.graftt;
 
-@Graft.Target(MethodWithArguments.class)
+@Graft.Recipient(MethodWithArguments.class)
 public class MethodWithArgumentsTransplant {
 
     @Graft.Fuse

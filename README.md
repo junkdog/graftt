@@ -19,46 +19,60 @@ it for the discussion leading up to this.
 - The odd bug fix in imported dependencies
 
 
-## Example Transplant for ComponentMapper
+## Example Transplant for SomeClass
+
+### A third-part class we wish to modify
 
 ```java
-// a third-party class we wish to extend
-public class SingleClassMethod {
+public class SomeClass {
     public final void yo() {
         yolo();
     }
 
     private void yolo() {
+        // boo! we want to call "invokedWithTransplant = true"
+        // here (for some reason or other), but yo() is final
+        // and can't be extended, while this method is private
+        //
+        // ...
+        //
         yoloCalled = true;
     }
 
     public boolean yoloCalled = false;
     public static boolean invokedWithTransplant = false;
 }
+```
 
+### Create a _transplant_ class to donate some bytecode 
 
-// begin transplant by specifying the recipient class.
-@Graft.Target(SingleClassMethod.class)
-public class SingleClassMethodTransplant {
+```java
+@Graft.Target(SomeClass.class)
+public class SomeClassTransplant {
     
     @Graft.Fuse // fuse with method in SingleClassMethod
     private void yolo() { // signature matches SingleClassMethod.yolo()
-        SingleClassMethod.invokedWithTransplant = true; // insert new statement
-        yolo(); // "recursive continuation", actually invokes SingleClassMethod::yolo 
+        // woop-woop
+        SomeClass.invokedWithTransplant = true; 
+        
+        // "recursive continuation", actually invokes SingleClassMethod::yolo
+        yolo();  
     }
 }
 ```
 
+### Resulting class
+
 Once transplanted, decompiling the modified class yields something similar to:
 
 ```java
-public class SingleClassMethod {
+public class SomeClass {
     public final void yo() {
         yolo();
     }
 
     private void yolo() {
-        SingleClassMethod.invokedWithTransplant = true;
+        SomeClass.invokedWithTransplant = true;
         yolo$original();
     }
 

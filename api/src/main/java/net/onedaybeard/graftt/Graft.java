@@ -21,7 +21,7 @@ public final class Graft {
     @Documented
     @Retention(CLASS)
     @java.lang.annotation.Target(TYPE)
-    public @interface Target { Class<?> value(); }
+    public @interface Recipient { Class<?> value(); }
 
     /**
      * Mock to keep the compiler happy when you need to reference
