@@ -22,19 +22,52 @@ it for the discussion leading up to this.
 ## Example Transplant for ComponentMapper
 
 ```java
-@Graft.Target(ComponentMapper.class)
-public class ComponentMapperTransplant<A> {
-
-    @Graft.Mock // only needed for compilation
-    private World world;
-
-    @Graft.Fuse // inject into original method; 
-    public A create(int entityId) {
-        LifecyclePlugin.dispatcher.onComponentPreCreate(world, entityId);
-        A result = create(entityId); // create(entity) refers to original method
-        LifecyclePlugin.dispatcher.onComponentPostCreate(world, entityId);
-        return result;
+// a third-party class we wish to extend
+public class SingleClassMethod {
+    public final void yo() {
+        yolo();
     }
+
+    private void yolo() {
+        yoloCalled = true;
+    }
+
+    public boolean yoloCalled = false;
+    public static boolean invokedWithTransplant = false;
+}
+
+
+// begin transplant by specifying the recipient class.
+@Graft.Target(SingleClassMethod.class)
+public class SingleClassMethodTransplant {
+    
+    @Graft.Fuse // fuse with method in SingleClassMethod
+    private void yolo() { // signature matches SingleClassMethod.yolo()
+        SingleClassMethod.invokedWithTransplant = true; // insert new statement
+        yolo(); // "recursive continuation", actually invokes SingleClassMethod::yolo 
+    }
+}
+```
+
+Once transplanted, decompiling the modified class yields something similar to:
+
+```java
+public class SingleClassMethod {
+    public final void yo() {
+        yolo();
+    }
+
+    private void yolo() {
+        SingleClassMethod.invokedWithTransplant = true;
+        yolo$original();
+    }
+
+    private void yolo$original() {
+        yoloCalled = true;
+    }
+
+    public boolean yoloCalled = false;
+    public static boolean invokedWithTransplant = false;
 }
 ```
 
