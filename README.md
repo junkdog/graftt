@@ -1,4 +1,6 @@
-# graftt - transplant bytecode using simple class templats
+_psst. this is still WIP, a lot of core functionality hasn't been wired or implemented yet._
+
+# graftt - annotation-driven bytecode surgery 
 
 Extend existing classes by grafting bytecode from *Transplant* classes. Transplants are
 plain java classes; annotations define interactions with the target class.
