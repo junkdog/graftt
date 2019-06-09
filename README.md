@@ -47,16 +47,13 @@ public class SomeClass {
 ### Create a _transplant_ class to donate some bytecode 
 
 ```java
-@Graft.Target(SomeClass.class)
+@Graft.Recipient(SomeClass.class) // target to modify
 public class SomeClassTransplant {
     
     @Graft.Fuse // fuse with method in SingleClassMethod
     private void yolo() { // signature matches SingleClassMethod.yolo()
-        // woop-woop
-        SomeClass.invokedWithTransplant = true; 
-        
-        // "recursive continuation", actually invokes SingleClassMethod::yolo
-        yolo();  
+        SomeClass.invokedWithTransplant = true; // whoop-whoop 
+        yolo(); // "recursive continuation", actually invokes SingleClassMethod::yolo  
     }
 }
 ```
@@ -87,8 +84,8 @@ public class SomeClass {
 
 ## API 
 
-- **`@Graft.Target`** specifies which class to transplant to.
-- **`@Graft.Fuse`** transplants bytecode over to `@Graft.Target`, translating any references to `ComponentMapperTransplant` -> `ComponentMapper`.
+- **`@Graft.Recipient`** specifies which class to transplant to.
+- **`@Graft.Fuse`** transplants bytecode over to `@Graft.Recipient`, translating any references to `ComponentMapperTransplant` -> `ComponentMapper`.
 - **`@Graft.Mock`** to keep the compiler happy when you need to reference fields or methods in the target class. Mocked references point to target class after transplant.
 - Any non-annotated methods or fields are copied over as-is.
 
