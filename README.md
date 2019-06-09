@@ -21,7 +21,7 @@ it for the discussion leading up to this.
 
 ## Example Transplant for SomeClass
 
-### A third-part class we wish to modify
+### A third-party class we wish to modify
 
 ```java
 public class SomeClass {
@@ -50,10 +50,10 @@ public class SomeClass {
 @Graft.Recipient(SomeClass.class) // target to modify
 public class SomeClassTransplant {
     
-    @Graft.Fuse // fuse with method in SingleClassMethod
-    private void yolo() { // signature matches SingleClassMethod.yolo()
+    @Graft.Fuse // fuse with method in SomeClass
+    private void yolo() { // signature matches SomeClass.yolo()
         SomeClass.invokedWithTransplant = true; // whoop-whoop 
-        yolo(); // "recursive continuation", actually invokes SingleClassMethod::yolo  
+        yolo(); // "recursive continuation", actually invokes SomeClass::yolo  
     }
 }
 ```
