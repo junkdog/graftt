@@ -46,16 +46,6 @@ fun ClassNode.sourceLanguage(): SourceLanguage {
 
 fun ClassNode.copy() = ClassNode(ASM7).also(::accept)
 
-fun MethodNode.copy() = MethodNode().also { n ->
-    n.access = access
-    n.name = name
-    n.desc = desc
-    n.signature = signature
-    n.exceptions = exceptions
-
-    accept(n)
-}
-
 fun FieldNode.copy() = FieldNode(
     access,
     name,
@@ -77,6 +67,11 @@ fun MethodNode.signatureEquals(other: MethodInsnNode): Boolean {
     return name      == other.name
         && desc      == other.desc
 }
+
+fun MethodNode.copy(copyInsn: Boolean = true) = MethodNode(
+    access, name, desc, signature, exceptions?.toTypedArray()
+).also { if (copyInsn) accept(it) }
+
 
 operator fun ClassNode.contains(t: Transplant.Method): Boolean {
     return methods.find { it.signatureEquals(t.node) } != null

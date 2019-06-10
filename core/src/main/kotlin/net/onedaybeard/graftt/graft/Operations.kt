@@ -17,16 +17,6 @@ private fun loadClassNode(type: Type) = resultOf {
         .let(::classNode)
 }
 
-// todo: this belongs in test on graft uses the proper classloader
-private class ByteClassLoader : ClassLoader() {
-    fun loadClass(cn: ClassNode): Class<*> {
-        val bytes = cn.toBytes()
-        val clazz = defineClass(cn.qualifiedName, bytes, 0, bytes.size)
-        resolveClass(clazz)
-        return clazz
-    }
-}
-
 fun performGraft(donor: ClassNode): Result<ClassNode, Msg> {
     val recipient = resultOf { donor }
         .andThen(::readRecipientType)
@@ -55,13 +45,7 @@ fun ClassNode.graft(field: Transplant.Field) {
 
 private fun graft(name: String, transplant: Transplant.Method): MethodNode {
     val original = transplant.node
-
-    val mn = MethodNode(
-        original.access,
-        original.name,
-        original.desc,
-        original.signature,
-        original.exceptions?.toTypedArray())
+    val mn = original.copy(copyInsn = false)
 
     val remapper = SimpleRemapper(transplant.donor, name)
     original.accept(MethodRemapper(mn, remapper))
