@@ -2,6 +2,7 @@ package net.onedaybeard.graftt
 
 import com.github.michaelbull.result.*
 import net.onedaybeard.graftt.SourceLanguage.*
+import net.onedaybeard.graftt.graft.Transplant
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.Opcodes.ASM7
@@ -45,6 +46,24 @@ fun ClassNode.sourceLanguage(): SourceLanguage {
 
 fun ClassNode.copy() = ClassNode(ASM7).also(::accept)
 
+fun MethodNode.copy() = MethodNode().also { n ->
+    n.access = access
+    n.name = name
+    n.desc = desc
+    n.signature = signature
+    n.exceptions = exceptions
+
+    accept(n)
+}
+
+fun FieldNode.copy() = FieldNode(
+    access,
+    name,
+    desc,
+    signature,
+    value)
+
+
 ////// methods
 
 fun MethodNode.signatureEquals(other: MethodNode): Boolean {
@@ -59,7 +78,9 @@ fun MethodNode.signatureEquals(other: MethodInsnNode): Boolean {
         && desc      == other.desc
 }
 
-
+operator fun ClassNode.contains(t: Transplant.Method): Boolean {
+    return methods.find { it.signatureEquals(t.node) } != null
+}
 
 ////// instructions
 

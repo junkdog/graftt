@@ -32,15 +32,25 @@ fun performGraft(donor: ClassNode): Result<ClassNode, Msg> {
         .andThen(::readTargetType)
         .andThen(::loadClassNode)
 
-    return resultOf(recipient) { donor }
+    val fusedMethods = resultOf(recipient) { donor }
         .map(ClassNode::graftableMethods)
         .map { fns -> fns.map { Transplant.Method(donor.name, it) } }
-        .map { fns -> fns.forEach { recipient.unwrap().fuse(it) } }
-        .andThen { verify(recipient.unwrap()) }
+        .mapAll { recipient.unwrap().fuse(it) }
+
+    val fusedFields = resultOf(fusedMethods) { donor }
+        .map { donor.graftableFields() }
+        .map { f -> f.map { Transplant.Field(donor.name, it) } }
+        .mapAll { f -> recipient.unwrap().fuse(f) }
+
+    return fusedFields.andThen { verify(recipient.unwrap()) }
 }
 
 fun ClassNode.graft(method: Transplant.Method) {
     methods.add(graft(name, method))
+}
+
+fun ClassNode.graft(field: Transplant.Field) {
+    fields.add(field.node.copy())
 }
 
 private fun graft(name: String, transplant: Transplant.Method): MethodNode {
@@ -59,18 +69,43 @@ private fun graft(name: String, transplant: Transplant.Method): MethodNode {
     return mn
 }
 
-fun ClassNode.fuse(transplant: Transplant.Method) {
+
+fun ClassNode.fuse(transplant: Transplant.Field): Result<ClassNode, Msg> {
+    if (methods.any { it.name == transplant.node.name })
+        return Err(Msg.UnableToTransplantFieldAlreadyExists(transplant.node))
+
+    graft(transplant)
+
+    return Ok(this)
+}
+
+fun ClassNode.fuse(transplant: Transplant.Method): Result<ClassNode, Msg> {
     val original = methods.find { it.signatureEquals(transplant.node) }
     if (original != null)
         original.name += "\$original"
 
-    val t = transplant.copy()
-    t.node.asSequence()
-        .mapNotNull { insn -> insn as? MethodInsnNode }
-        .filter { insn -> t.node.signatureEquals(insn) }
-        .forEach { it.name += "\$original" }
+    val t = transplant.copy(node = transplant.node.copy())
+    val doFuse = t.node.hasAnnotation(type<Graft.Fuse>())
+    val canFuse = original != null
 
-    graft(t)
+    val operation: Result<ClassNode, Msg> = when {
+        !doFuse && canFuse -> Err(Msg.UnableToTransplantMethodAlreadyExists(t.node))
+        doFuse && !canFuse -> Err(Msg.UnableToTransplantWrongFuseSignature(t.node))
+        doFuse && canFuse -> {
+            t.node.asSequence()
+                .mapNotNull { insn -> insn as? MethodInsnNode }
+                .filter { insn -> t.node.signatureEquals(insn) }
+                .forEach { it.name += "\$original" }
+            Ok(this)
+        }
+        else -> Ok(this)
+    }
+
+    t.node.asSequence()
+
+    return operation
+        .andThen { resultOf { graft(t) } }
+        .map { this }
 }
 
 

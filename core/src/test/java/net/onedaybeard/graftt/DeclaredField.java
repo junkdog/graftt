@@ -1,9 +1,9 @@
 package net.onedaybeard.graftt;
 
 public class DeclaredField {
-    private String prepend = "blake";
+    private String prepend = "william";
 
-    public String yolo(String text) {
-        return prepend + " " + text;
+    public String yolo() {
+        return prepend;
     }
 }

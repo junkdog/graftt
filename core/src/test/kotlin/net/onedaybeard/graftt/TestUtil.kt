@@ -8,10 +8,17 @@ import kotlin.test.assertEquals
 import kotlin.test.fail
 
 
+fun doFail(msg: Msg) {
+    when (val m = msg) {
+        is Msg.Error -> throw m.e
+        else         -> fail(m.toString())
+    }
+}
+
 inline fun <reified T> transplant(): ClassNode {
     return resultOf { classNode<T>() }      // donor
         .andThen { performGraft(it) }       // recipient
-        .onFailure { fail(it.toString()) }
+        .onFailure(::doFail)
         .get()!!
 }
 
@@ -35,7 +42,7 @@ fun <T> Any.method(name: String,
         .find { it.name == name }
         .toResultOr { Msg.NoSuchKey(name) }
         .andThen { resultOf { it.invoke(this, *params.toTypedArray()) } }
-        .onFailure { fail(it.toString()) }
+        .onFailure(::doFail)
         .get()
 
     if (expected != null)
@@ -76,7 +83,7 @@ fun <T> Any.assertFieldValue(name: String, expected: T? = null) {
         .andThen { resultOf { it.get(this) } }
         .fold(
             success = { if (expected != null) assertEquals(expected, it) },
-            failure = { fail(it.toString()) })
+            failure = { doFail(it) })
 }
 
 fun instantiate(cn: ClassNode, f: Any.() -> Unit): Any {

@@ -7,9 +7,9 @@ public class MockedFieldTransplant {
     private String prepend = null;
 
     @Graft.Fuse
-    public String yolo(String text) {
+    public String withPrependField(String text) {
         // prepend translated to MockedField::prepend
-        prepend = new StringBuilder(text).reverse().toString();
-        return yolo(text);
+        prepend = new StringBuilder(prepend).reverse().toString();
+        return withPrependField(text);
     }
 }

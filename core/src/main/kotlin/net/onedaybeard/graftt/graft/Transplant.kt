@@ -12,15 +12,5 @@ sealed class Transplant {
     data class Method(
         val donor: String,
         val node: MethodNode
-    ) : Transplant() {
-        fun copy() = Method(donor, MethodNode().apply {
-            access = node.access
-            name = node.name
-            desc = node.desc
-            signature = node.signature
-            exceptions = node.exceptions
-
-            node.accept(this)
-        })
-    }
+    ) : Transplant()
 }

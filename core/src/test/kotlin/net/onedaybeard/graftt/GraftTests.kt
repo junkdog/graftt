@@ -2,7 +2,6 @@ package net.onedaybeard.graftt
 
 import org.junit.Test
 import kotlin.test.assertEquals
-import kotlin.test.fail
 
 class GraftTests {
 
@@ -22,17 +21,34 @@ class GraftTests {
 
     @Test
     fun `declared fields are transplanted to recipient`() {
-        fail()
+        val recipient = transplant<DeclaredFieldTransplant>()
+
+        // N.B. field values are only copied over for primitive types
+        // TODO: support injecting into initializer
+        instantiate(recipient) {
+            assertEquals("william null", invokeMethod("yolo")!!)
+        }
     }
 
     @Test
     fun `mocked fields are ignored during transplant`() {
-        fail()
+        val recipient = transplant<MockedFieldTransplant>()
+
+        instantiate(recipient) {
+            assertEquals(
+                "54321 birb",
+                invokeMethod<String>("withPrependField", listOf("birb")))
+        }
     }
 
     @Test
     fun `declared methods are transplanted to recipient`() {
-        fail()
+        val recipient = transplant<DeclaredMethodTransplant>()
+
+        instantiate(recipient) {
+            val omg = invokeMethod<String>("toUpperCase", listOf("omg"))
+            assertEquals("OMG!!!", omg)
+        }
     }
 
     @Test
