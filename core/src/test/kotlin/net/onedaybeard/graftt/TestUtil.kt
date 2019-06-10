@@ -1,8 +1,19 @@
 package net.onedaybeard.graftt
 
+import com.github.michaelbull.result.*
+import net.onedaybeard.graftt.graft.performGraft
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
 import kotlin.test.assertEquals
+import kotlin.test.fail
+
+
+inline fun <reified T> transplant(): ClassNode {
+    return resultOf { classNode<T>() }      // donor
+        .andThen { performGraft(it) }       // recipient
+        .onFailure { fail(it.toString()) }
+        .get()!!
+}
 
 
 data class FieldObserver<T>(
@@ -15,24 +26,37 @@ fun <T> observeField(name: String, oldToNew: Pair<T, T>): FieldObserver<T> {
     return FieldObserver(name, oldToNew.first, oldToNew.second)
 }
 
-fun <T> Any.method(name: String, expected: T? = null): T? {
+fun <T> Any.method(name: String,
+                   params: List<Any?> = listOf(),
+                   expected: T? = null): T? {
+
     val actual = this::class.java
         .declaredMethods
-        .first { it.name == name }
-        .invoke(this)
+        .find { it.name == name }
+        .toResultOr { Msg.NoSuchKey(name) }
+        .andThen { resultOf { it.invoke(this, *params.toTypedArray()) } }
+        .onFailure { fail(it.toString()) }
+        .get()
 
     if (expected != null)
         assertEquals(expected, actual)
 
     @Suppress("UNCHECKED_CAST")
-    return actual as? T
+    return actual as T?
 }
 
 inline fun <reified T> Any.invokeMethod(name: String,
                                         vararg observers: FieldObserver<*>): T? {
 
+    return invokeMethod(name, listOf(), *observers)
+}
+
+inline fun <reified T> Any.invokeMethod(name: String,
+                                        params: List<Any?>,
+                                        vararg observers: FieldObserver<*>): T? {
+
     observers.forEach { assertFieldValue(it.name, it.original) }
-    val t = method<T>(name)
+    val t = method<T>(name, params)
     observers.forEach { assertFieldValue(it.name, it.updated) }
 
     return t
@@ -45,13 +69,14 @@ fun Any.assertMethodExists(name: String): Boolean {
 }
 
 fun <T> Any.assertFieldValue(name: String, expected: T? = null) {
-    val actual = this::class.java
+    this::class.java
         .declaredFields
-        .first { it.name == name }
-        .get(this)
-
-    if (expected != null)
-        assertEquals(expected, actual)
+        .find { it.name == name }
+        .toResultOr { Msg.NoSuchKey(name) }
+        .andThen { resultOf { it.get(this) } }
+        .fold(
+            success = { if (expected != null) assertEquals(expected, it) },
+            failure = { fail(it.toString()) })
 }
 
 fun instantiate(cn: ClassNode, f: Any.() -> Unit): Any {

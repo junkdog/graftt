@@ -59,13 +59,7 @@ fun MethodNode.signatureEquals(other: MethodInsnNode): Boolean {
         && desc      == other.desc
 }
 
-fun MethodNode.hasAnnotation(type: Type): Boolean {
-    val desc = type.descriptor
-    fun foundIn(list: List<AnnotationNode>?)
-        = list?.findAnnotation(desc)?.get() != null
 
-    return foundIn(visibleAnnotations) || foundIn(invisibleAnnotations)
-}
 
 ////// instructions
 
@@ -73,6 +67,17 @@ fun InsnList.asSequence() = Iterable { iterator() }.asSequence()
 fun MethodNode.asSequence() = instructions.asSequence()
 
 ////// annotations
+
+
+fun ClassNode.hasAnnotation(type: Type) =
+    type in visibleAnnotations || type in invisibleAnnotations
+
+fun MethodNode.hasAnnotation(type: Type) =
+    type in visibleAnnotations || type in invisibleAnnotations
+
+fun FieldNode.hasAnnotation(type: Type) =
+    type in visibleAnnotations || type in invisibleAnnotations
+
 
 fun List<AnnotationNode>.findAnnotation(desc: String) =
     find { it.desc == desc }.toResultOr { Msg.None }
@@ -117,3 +122,9 @@ fun classNode(file: File) = classNode(classReader(file))
 
 inline fun <reified T> type() = type(T::class)
 fun type(cls: KClass<*>) = Type.getType(cls.java)
+
+
+private operator fun List<AnnotationNode>?.contains(type: Type) = when(this) {
+    null -> false
+    else -> findAnnotation(type.descriptor).get() != null
+}

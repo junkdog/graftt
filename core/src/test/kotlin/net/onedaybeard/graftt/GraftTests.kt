@@ -1,20 +1,16 @@
 package net.onedaybeard.graftt
 
-import com.github.michaelbull.result.*
-import net.onedaybeard.graftt.graft.*
 import org.junit.Test
+import kotlin.test.assertEquals
 import kotlin.test.fail
 
 class GraftTests {
 
     @Test
     fun `fuse a simple method without arguments`() {
-        val donor = classNode<SingleClassMethodTransplant>()
+        val recipient = transplant<SingleClassMethodTransplant>()
 
-        val recipient = performGraft(donor)
-            .onFailure { fail(it.toString()) }
-
-        instantiate(recipient.unwrap()) {
+        instantiate(recipient) {
             assertMethodExists("yolo")
             assertMethodExists("yolo\$original")
 
@@ -41,6 +37,12 @@ class GraftTests {
 
     @Test
     fun `mocked methods are ignored during transplant`() {
-        fail()
+        val recipient = transplant<MockedMethodTransplant>()
+
+        instantiate(recipient) {
+            val result = invokeMethod<String>("withMethod", listOf("hello"))
+            assertEquals("AAA hello AAA", result)
+        }
     }
 }
+

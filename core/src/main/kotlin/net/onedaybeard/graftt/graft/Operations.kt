@@ -74,8 +74,13 @@ fun ClassNode.fuse(transplant: Transplant.Method) {
 }
 
 
-fun ClassNode.graftableMethods() =
-    methods.filter { it.hasAnnotation(type<Graft.Fuse>()) }
+fun ClassNode.graftableMethods() = methods
+        .filterNot { it.hasAnnotation(type<Graft.Mock>()) }
+        .filterNot { "<init>" in it.name }
+        .filterNot { "<clinit>" in it.name }
+
+fun ClassNode.graftableFields() = fields
+        .filterNot { it.hasAnnotation(type<Graft.Mock>()) }
 
 fun readTargetType(donor: ClassNode): Result<Type, Msg> {
     return donor
