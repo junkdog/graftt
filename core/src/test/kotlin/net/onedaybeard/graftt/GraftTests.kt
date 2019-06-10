@@ -5,10 +5,10 @@ import net.onedaybeard.graftt.graft.*
 import org.junit.Test
 import kotlin.test.fail
 
-class GraftTest {
+class GraftTests {
 
     @Test
-    fun `fuse no args methods`() {
+    fun `fuse a simple method without arguments`() {
         val donor = classNode<SingleClassMethodTransplant>()
 
         val recipient = performGraft(donor)
@@ -22,5 +22,25 @@ class GraftTest {
                 observeField("invokedWithTransplant", false to true),
                 observeField("yoloCalled",            false to true))
         }
+    }
+
+    @Test
+    fun `declared fields are transplanted to recipient`() {
+        fail()
+    }
+
+    @Test
+    fun `mocked fields are ignored during transplant`() {
+        fail()
+    }
+
+    @Test
+    fun `declared methods are transplanted to recipient`() {
+        fail()
+    }
+
+    @Test
+    fun `mocked methods are ignored during transplant`() {
+        fail()
     }
 }

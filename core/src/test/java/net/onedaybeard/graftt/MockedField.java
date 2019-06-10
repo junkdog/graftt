@@ -1,9 +1,9 @@
 package net.onedaybeard.graftt;
 
 public class MockedField {
-    private String prepend = null;
+    private String prepend = "12345";
 
-    public String yolo(String text) {
+    public String withPrependField(String text) {
         return prepend + " " + text;
     }
 }

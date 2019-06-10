@@ -4,7 +4,7 @@ package net.onedaybeard.graftt;
 public class MethodWithArgumentsTransplant {
 
     @Graft.Fuse
-    public int yolo(int a, int b) {
-        return yolo(a - 1, b - a);
+    public int update(int a, int b) {
+        return update(a - 1, b + 1);
     }
 }

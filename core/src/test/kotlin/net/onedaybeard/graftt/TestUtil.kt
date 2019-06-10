@@ -1,21 +1,9 @@
 package net.onedaybeard.graftt
 
-import com.github.michaelbull.result.getError
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
-import kotlin.reflect.KClass
 import kotlin.test.assertEquals
 
-
-infix fun ClassNode.bytecodeEquals(kClass: KClass<*>) {
-    assertEquals(
-        null,
-        verify(this).getError())
-
-    assertEquals(
-        classNode(kClass).apply { sourceFile = null }.toDebugString(),
-        toDebugString())
-}
 
 data class FieldObserver<T>(
     val name: String,
@@ -40,7 +28,9 @@ fun <T> Any.method(name: String, expected: T? = null): T? {
     return actual as? T
 }
 
-inline fun <reified T> Any.invokeMethod(name: String, vararg observers: FieldObserver<*>): T? {
+inline fun <reified T> Any.invokeMethod(name: String,
+                                        vararg observers: FieldObserver<*>): T? {
+
     observers.forEach { assertFieldValue(it.name, it.original) }
     val t = method<T>(name)
     observers.forEach { assertFieldValue(it.name, it.updated) }
@@ -71,7 +61,7 @@ fun instantiate(cn: ClassNode, f: Any.() -> Unit): Any {
 }
 
 fun loadClassNode(type: Type) = resultOf {
-    GraftTest::class.java
+    GraftTests::class.java
         .getResourceAsStream("/${type.internalName}.class")
         .let(::classNode)
 }
