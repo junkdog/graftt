@@ -29,7 +29,7 @@ private class ByteClassLoader : ClassLoader() {
 
 fun performGraft(donor: ClassNode): Result<ClassNode, Msg> {
     val recipient = resultOf { donor }
-        .andThen(::readTargetType)
+        .andThen(::readRecipientType)
         .andThen(::loadClassNode)
 
     val fusedMethods = resultOf(recipient) { donor }
@@ -117,7 +117,7 @@ fun ClassNode.graftableMethods() = methods
 fun ClassNode.graftableFields() = fields
         .filterNot { it.hasAnnotation(type<Graft.Mock>()) }
 
-fun readTargetType(donor: ClassNode): Result<Type, Msg> {
+fun readRecipientType(donor: ClassNode): Result<Type, Msg> {
     return donor
         .invisibleAnnotations.toResultOr { Msg.None }
         .andThen { it.findAnnotation<Graft.Recipient>() }

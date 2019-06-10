@@ -37,7 +37,7 @@ class GraftTests {
         instantiate(recipient) {
             assertEquals(
                 "54321 birb",
-                invokeMethod<String>("withPrependField", listOf("birb")))
+                invokeMethod("withPrependField", listOf("birb"))!!)
         }
     }
 
