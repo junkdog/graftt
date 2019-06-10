@@ -18,9 +18,9 @@ sealed class Msg {
     object None : Msg()
     data class NoSuchKey(val key: String) : Msg()
 
-    data class UnableToTransplantFieldAlreadyExists(val node: FieldNode) : Msg()
-    data class UnableToTransplantMethodAlreadyExists(val node: MethodNode) : Msg()
-    data class UnableToTransplantWrongFuseSignature(val node: MethodNode) : Msg()
+    data class FieldAlreadyExists(val node: FieldNode) : Msg()
+    data class MethodAlreadyExists(val node: MethodNode) : Msg()
+    data class WrongFuseSignature(val node: MethodNode) : Msg()
 
     data class WrongTypeT(
         val expected: KClass<*>,
