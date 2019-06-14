@@ -17,22 +17,26 @@ fun loadClassNode(type: Type) = resultOf {
         .let(::classNode)
 }
 
-fun performGraft(donor: ClassNode): Result<ClassNode, Msg> {
-    val recipient = resultOf { donor }
-        .andThen(::readRecipientType)
-        .andThen(::loadClassNode)
-
-    val fusedMethods = resultOf(recipient) { donor }
+fun performGraft(donor: ClassNode, recipient: ClassNode): Result<ClassNode, Msg> {
+    val fusedMethods = resultOf { donor }
         .map(ClassNode::graftableMethods)
         .map { fns -> fns.map { Transplant.Method(donor.name, it) } }
-        .mapAll { recipient.unwrap().fuse(it) }
+        .mapAll(recipient::fuse)
 
     val fusedFields = resultOf(fusedMethods) { donor }
         .map(ClassNode::graftableFields)
         .map { f -> f.map { Transplant.Field(donor.name, it) } }
-        .mapAll { recipient.unwrap().fuse(it) }
+        .mapAll(recipient::fuse)
 
-    return fusedFields.andThen { verify(recipient.unwrap()) }
+    return fusedFields
+        .andThen { verify(recipient) }
+}
+
+fun performGraft(donor: ClassNode): Result<ClassNode, Msg> {
+    return resultOf { donor }
+        .andThen(::readRecipientType)
+        .andThen(::loadClassNode)
+        .andThen { recipient -> performGraft(donor, recipient) }
 }
 
 fun ClassNode.graft(method: Transplant.Method) {

@@ -9,9 +9,15 @@ import org.objectweb.asm.util.CheckClassAdapter
 import org.objectweb.asm.util.TraceClassVisitor
 import java.io.PrintWriter
 import java.io.StringWriter
+import java.lang.RuntimeException
 
 @Suppress("NonAsciiCharacters")
-internal val `(╯°□°）╯︵ ┻━┻`: (String) -> Nothing = ::TODO
+val `(╯°□°）╯︵ ┻━┻`: (Msg) -> Nothing = { msg ->
+    when (msg) {
+        is Msg.Error -> throw msg.e
+        else         -> throw RuntimeException(msg.toString())
+    }
+}
 
 fun <T> anyOf(vararg predicates: (T) -> Boolean): (T) -> Boolean = { t -> predicates.any { it(t) } }
 fun <T> allOf(vararg predicates: (T) -> Boolean): (T) -> Boolean = { t -> predicates.all { it(t) } }
