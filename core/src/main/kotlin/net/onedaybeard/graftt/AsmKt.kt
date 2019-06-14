@@ -131,6 +131,7 @@ fun classReader(klazz: Class<*>) =
 
 inline fun <reified T> classNode() = classNode(T::class)
 fun classNode(cr: ClassReader) = ClassNode().apply { cr.accept(this, 0) }
+fun classNode(bytes: ByteArray) = classNode(classReader(bytes))
 fun classNode(klazz: KClass<*>) = classNode(klazz.java)
 fun classNode(klazz: Class<*>) = classNode(classReader(klazz))
 fun classNode(stream: InputStream) = classNode(classReader(stream))

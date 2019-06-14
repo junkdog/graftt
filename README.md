@@ -32,7 +32,7 @@ public class SomeClass {
     private void yolo() {
         // boo! we want to call "invokedWithTransplant = true"
         // here (for some reason or other), but yo() is final
-        // and can't be extended, while this method is private
+        // and can't be extended, and this method is private
         //
         // ...
         //

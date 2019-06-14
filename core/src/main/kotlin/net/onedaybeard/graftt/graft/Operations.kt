@@ -11,7 +11,7 @@ import org.objectweb.asm.tree.MethodNode
 
 
 // todo: fix proper
-private fun loadClassNode(type: Type) = resultOf {
+fun loadClassNode(type: Type) = resultOf {
     Msg::class.java
         .getResourceAsStream("/${type.internalName}.class")
         .let(::classNode)
@@ -63,6 +63,7 @@ fun ClassNode.fuse(transplant: Transplant.Field): Result<ClassNode, Msg> {
     return Ok(this)
 }
 
+/** apply [transplant] to this [ClassNode] */
 fun ClassNode.fuse(transplant: Transplant.Method): Result<ClassNode, Msg> {
     val original = methods.find { it.signatureEquals(transplant.node) }
     if (original != null)
@@ -79,13 +80,11 @@ fun ClassNode.fuse(transplant: Transplant.Method): Result<ClassNode, Msg> {
             t.node.asSequence()
                 .mapNotNull { insn -> insn as? MethodInsnNode }
                 .filter { insn -> t.node.signatureEquals(insn) }
-                .forEach { it.name += "\$original" }
+                .forEach { it.name = original!!.name }
             Ok(this)
         }
         else               -> Ok(this)
     }
-
-    t.node.asSequence()
 
     return operation
         .andThen { resultOf { graft(t) } }
@@ -106,6 +105,6 @@ fun readRecipientType(donor: ClassNode): Result<Type, Msg> {
         .invisibleAnnotations.toResultOr { Msg.None }
         .andThen { it.findAnnotation<Graft.Recipient>() }
         .andThen { it.get<Type>("value") }
-        .mapSafeError { Msg.MissingGraftTargetAnnotation(donor) }
+        .mapSafeError { Msg.MissingGraftTargetAnnotation(donor.name) }
 }
 

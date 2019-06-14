@@ -13,7 +13,7 @@ sealed class Msg {
 
     data class Error(val e: Throwable) : Msg()
 
-    data class MissingGraftTargetAnnotation(val cn: ClassNode) : Msg()
+    data class MissingGraftTargetAnnotation(val name: String) : Msg()
 
     object None : Msg()
     data class NoSuchKey(val key: String) : Msg()

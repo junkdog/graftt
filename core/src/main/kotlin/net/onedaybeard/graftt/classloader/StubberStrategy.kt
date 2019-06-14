@@ -1,13 +1,9 @@
 package net.onedaybeard.graftt.classloader
 
+import net.onedaybeard.graftt.toBytes
 import org.objectweb.asm.tree.ClassNode
 
-interface StubberStrategy {
-    fun stubClass(name: String, nodes: Map<String, ClassNode>): ByteArray
+interface AsmStrategy {
+    fun stubClass(name: String): ByteArray
 }
 
-class IdentityStubber : StubberStrategy {
-    override fun stubClass(name: String, nodes: Map<String, ClassNode>): ByteArray {
-        TODO()
-    }
-}
