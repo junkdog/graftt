@@ -10,8 +10,6 @@
     <url>https://github.com/junkdog/graftt</url>
 
     <properties>
-        <main.class>net.onedaybeard.graftt.CliKt</main.class>
-
         <kotlin.version>1.3.31</kotlin.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -78,6 +76,7 @@
         <module>api</module>
         <module>core</module>
         <module>agent</module>
+        <module>graftt-maven-plugin</module>
     </modules>
 
     <profiles>
