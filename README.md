@@ -1,12 +1,15 @@
-_psst. this is still WIP, a lot of core functionality hasn't been wired or implemented yet._
-
 # graftt - annotation-driven bytecode surgery 
 
 Extend existing classes by grafting bytecode from *Transplant* classes. Transplants are
-plain java classes; annotations define interactions with the target class.
+plain java classes and function like templates or blueprints; annotations define interactions
+with the recipient class.
 
-A custom classloader is responsible for applying the transformations at load-time. The
-classloader is setup either using a javaagent or prior to referencing any targeted classes.
+Transplants have complete access to the recipient class. Existing methods can be wrapped,
+changed or replaced entirely.
+
+An agent (`java -javaagent:agent.jar`) applies transplants at load-time. Alternatively, 
+`graftt-maven-plugin` finds and applies transplants within `target/classes`.  
+
 
 Sprung from [artemis-odb/570](https://github.com/junkdog/artemis-odb/issues/570), refer to
 it for the discussion leading up to this.
