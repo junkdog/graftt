@@ -34,7 +34,7 @@
     </licenses>
 
     <issueManagement>
-        <url>https://github.com/junkdog/artemis-odb/issues</url>
+        <url>https://github.com/junkdog/graftt/issues</url>
         <system>GitHub Issues</system>
     </issueManagement>
 
@@ -77,7 +77,6 @@
         <module>core</module>
         <module>agent</module>
         <module>graftt-maven-plugin</module>
-        <module>graftt-maven-plugin-test</module>
     </modules>
 
     <profiles>
