@@ -81,11 +81,16 @@ fun ClassNode.fuse(transplant: Transplant.Method): Result<ClassNode, Msg> {
         !doFuse && canFuse -> Err(Msg.MethodAlreadyExists(t.node))
         doFuse && !canFuse -> Err(Msg.WrongFuseSignature(t.node))
         doFuse && canFuse  -> {
-            t.node.asSequence()
+            val replacesOriginal = t.node.asSequence()
                 .mapNotNull { insn -> insn as? MethodInsnNode }
                 .filter { insn -> t.node.signatureEquals(insn) }
                 .filter { insn -> insn.owner == t.donor }
-                .forEach { it.name = original!!.name }
+                .onEach { it.name = original!!.name }
+                .count() == 0
+
+            if (replacesOriginal)
+                methods.remove(original)
+
             Ok(this)
         }
         else               -> Ok(this)
