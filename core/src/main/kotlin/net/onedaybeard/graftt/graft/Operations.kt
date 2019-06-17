@@ -84,6 +84,7 @@ fun ClassNode.fuse(transplant: Transplant.Method): Result<ClassNode, Msg> {
             t.node.asSequence()
                 .mapNotNull { insn -> insn as? MethodInsnNode }
                 .filter { insn -> t.node.signatureEquals(insn) }
+                .filter { insn -> insn.owner == t.donor }
                 .forEach { it.name = original!!.name }
             Ok(this)
         }

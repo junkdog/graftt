@@ -60,5 +60,15 @@ class GraftTests {
             assertEquals("AAA hello AAA", result)
         }
     }
+
+    @Test
+    fun `override final toString`() {
+        val recipient = transplant<SomethingWithBadToStringTransplant>()
+
+        instantiate(recipient) {
+            val result = invokeMethod<String>("toString")
+            assertEquals("3: hello", result)
+        }
+    }
 }
 
