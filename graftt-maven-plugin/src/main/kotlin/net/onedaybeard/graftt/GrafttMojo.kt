@@ -12,6 +12,8 @@ import org.objectweb.asm.tree.ClassNode
 import java.io.File
 import java.lang.RuntimeException
 
+private const val LINE_WIDTH = 72
+
 private val Pair<String, String>.length: Int
     get() = first.length + second.length
 
@@ -32,30 +34,30 @@ class GrafttMojo : AbstractMojo() {
         if (!enable) return
 
         classDirectory.walk()
-            .filter { it.endsWith(".class") }
+            .filter { it.name.endsWith(".class") }
             .map(::classNode)
             .filter { cn -> readRecipientType(cn).get() != null }
             .onEach(this::transplant)
             .toList()
-            .let { donated ->
-                val w = 72
+            .let(this::logSummary)
 
-                log.info(format("graftt surgical summary:" to "${donated.size}", ' '))
-                log.info("-".repeat(w))
-                donated
-                    .map { cn -> cn to readRecipientType(cn).map(this::loadClassNode).unwrap() }
-                    .map { (d, r) -> format(d.simpleName to r.simpleName) }
-                    .forEach(log::info)
-                log.info("-".repeat(w))
+    }
 
+    private fun logSummary(donated: List<ClassNode>) {
+        fun format(kv: Pair<String, String>, delim: Char = '.'): String {
+            return "$delim".repeat(LINE_WIDTH - 2 - kv.length)
+                .let { "${kv.first} $it ${kv.second}" }
         }
 
+        log.info(format("graftt surgical summary:" to "${donated.size}", ' '))
+        log.info("-".repeat(LINE_WIDTH))
+        donated
+            .map { cn -> cn to readRecipientType(cn).map(this::loadClassNode).unwrap() }
+            .map { (d, r) -> format(d.simpleName to r.simpleName) }
+            .forEach(log::info)
+        log.info("-".repeat(LINE_WIDTH))
     }
 
-    private fun format(kv: Pair<String, String>, delim: Char = '.'): String {
-        return "$delim".repeat(72 - 2 - kv.length)
-            .let { "${kv.first} $it ${kv.second}" }
-    }
 
     private fun transplant(donor: ClassNode) {
         resultOf { donor }

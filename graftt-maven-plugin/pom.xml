@@ -12,7 +12,7 @@
 
     <artifactId>graftt-maven-plugin</artifactId>
     <packaging>maven-plugin</packaging>
-    <name>graftt maven plugin</name>
+    <name>graftt - maven plugin</name>
 
     <repositories>
         <repository>
@@ -60,29 +60,26 @@
 
         <plugins>
             <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.1.1</version>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-plugin-plugin</artifactId>
+                <version>3.6.0</version>
                 <configuration>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                    <archive>
-                        <index>true</index>
-                        <manifest>
-                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-                        </manifest>
-                        <manifestEntries>
-                            <Premain-Class>net.onedaybeard.graftt.agent.GraftAgent</Premain-Class>
-                        </manifestEntries>
-                    </archive>
+                    <!-- see http://jira.codehaus.org/browse/MNG-5346 -->
+                    <skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>
+                    <goalPrefix>artemis-odb</goalPrefix>
                 </configuration>
                 <executions>
                     <execution>
-                        <id>make-assembly</id>
-                        <phase>package</phase>
+                        <id>mojo-descriptor</id>
                         <goals>
-                            <goal>single</goal>
+                            <goal>descriptor</goal>
+                        </goals>
+                    </execution>
+                    <!-- if you want to generate help goal -->
+                    <execution>
+                        <id>help-goal</id>
+                        <goals>
+                            <goal>helpmojo</goal>
                         </goals>
                     </execution>
                 </executions>

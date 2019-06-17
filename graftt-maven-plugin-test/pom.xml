@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>net.onedaybeard.graftt</groupId>
+        <artifactId>root</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <properties>
+         <!-- system property, defaults to true -->
+        <graft.enable>true</graft.enable>
+    </properties>
+
+
+    <artifactId>graftt-maven-plugin-test</artifactId>
+    <packaging>jar</packaging>
+    <name>graftt - maven plugin test</name>
+
+    <repositories>
+        <repository>
+            <id>result type</id>
+            <url>https://dl.bintray.com/michaelbull/maven</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>net.onedaybeard.graftt</groupId>
+            <artifactId>api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-stdlib</artifactId>
+            <version>${kotlin.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-reflect</artifactId>
+            <version>${kotlin.version}</version>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>net.onedaybeard.graftt</groupId>
+                <artifactId>graftt-maven-plugin</artifactId>
+                <version>${project.version}</version>
+                <executions>
+                    <execution>
+                        <id>graftt</id>
+                        <goals>
+                            <goal>graftt</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <!-- also exposed as system property -Dgraftt.enable=true -->
+                    <!--
+                    <enable>true</enable>
+                    -->
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
