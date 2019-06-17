@@ -89,7 +89,6 @@
                 <version>3.2.0</version>
                 <configuration>
                     <cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
-<!--                    <settingsFile>src/it/settings.xml</settingsFile>-->
                     <localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>
                     <postBuildHookScript>verify</postBuildHookScript> <!-- no extension required -->
                 </configuration>

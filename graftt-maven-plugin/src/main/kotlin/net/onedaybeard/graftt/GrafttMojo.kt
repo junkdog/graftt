@@ -62,8 +62,8 @@ class GrafttMojo : AbstractMojo() {
             .andThen(::readRecipientType)
             .andThen(this::loadClassNode)
             .andThen { recipient -> performGraft(donor, recipient) }
+            .andThen(this::save)
             .onFailure(`(╯°□°）╯︵ ┻━┻`)
-            .onSuccess(this::save)
     }
 
     private fun loadClassNode(type: Type): Result<ClassNode, Msg> = resultOf {
@@ -71,7 +71,7 @@ class GrafttMojo : AbstractMojo() {
             .let(::classNode)
     }
 
-    private fun save(cn: ClassNode) {
+    private fun save(cn: ClassNode) = resultOf {
         val f = File(classDirectory, "${cn.name}.class")
         if (!f.exists()) throw RuntimeException("wrong path: ${f.absolutePath}")
 
