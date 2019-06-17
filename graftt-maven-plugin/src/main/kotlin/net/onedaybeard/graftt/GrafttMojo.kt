@@ -20,7 +20,6 @@ private val Pair<String, String>.length: Int
 private val ClassNode.simpleName: String
     get() = qualifiedName.substringAfterLast(".")
 
-// todo: 1) log/report 2) test
 @Mojo(name = "graftt", defaultPhase = PROCESS_CLASSES)
 class GrafttMojo : AbstractMojo() {
 
@@ -40,7 +39,6 @@ class GrafttMojo : AbstractMojo() {
             .onEach(this::transplant)
             .toList()
             .let(this::logSummary)
-
     }
 
     private fun logSummary(donated: List<ClassNode>) {
@@ -52,7 +50,7 @@ class GrafttMojo : AbstractMojo() {
         log.info(format("graftt surgical summary:" to "${donated.size}", ' '))
         log.info("-".repeat(LINE_WIDTH))
         donated
-            .map { cn -> cn to readRecipientType(cn).map(this::loadClassNode).unwrap() }
+            .map { cn -> cn to readRecipientType(cn).andThen(this::loadClassNode).unwrap() }
             .map { (d, r) -> format(d.simpleName to r.simpleName) }
             .forEach(log::info)
         log.info("-".repeat(LINE_WIDTH))
@@ -62,14 +60,14 @@ class GrafttMojo : AbstractMojo() {
     private fun transplant(donor: ClassNode) {
         resultOf { donor }
             .andThen(::readRecipientType)
-            .andThen { type -> resultOf { loadClassNode(type) } }
+            .andThen(this::loadClassNode)
             .andThen { recipient -> performGraft(donor, recipient) }
             .onFailure(`(╯°□°）╯︵ ┻━┻`)
             .onSuccess(this::save)
     }
 
-    private fun loadClassNode(type: Type): ClassNode {
-        return File(classDirectory, "${type.internalName.replace('.', '/')}.class")
+    private fun loadClassNode(type: Type): Result<ClassNode, Msg> = resultOf {
+        File(classDirectory, "${type.internalName.replace('.', '/')}.class")
             .let(::classNode)
     }
 
