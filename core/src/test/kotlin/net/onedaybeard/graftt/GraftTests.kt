@@ -78,5 +78,14 @@ class GraftTests {
             assertEquals("hi", toString())
         }
     }
+
+    @Test
+    fun `remove original method when not called by transplant`() {
+        val recipient = transplant<ReplaceOriginalTransplant>()
+        instantiate(recipient) {
+            assertEquals(true, invokeMethod("hmm")!!)
+            assertEquals(1, this::class.java.declaredMethods.size)
+        }
+    }
 }
 
