@@ -70,5 +70,13 @@ class GraftTests {
             assertEquals("3: hello", result)
         }
     }
+
+    @Test
+    fun `override method in base class`() {
+        val recipient = transplant<BarImplTransplant>()
+        instantiate(recipient) {
+            assertEquals("hi", toString())
+        }
+    }
 }
 
