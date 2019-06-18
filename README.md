@@ -107,9 +107,35 @@ Nice to have, but not now:
 
 ## Caveats
 - You're working against internal implementation; there are no semver guarantees
-- No retrofitting of interfaces or parent type on target class
+- No rewiring of parent type on target class
 - Annotations aren't fused (is there a use-case?)
 - No `@Graft.Fuse` for constructors; nice to have, but not initially
 - No GWT support
-- No android support (possible but not planned)
+- No android support (possible with a custom gradle task)
 
+## Usage
+
+Current `$VERSION` is `0.1.0-SNAPSHOT`
+
+### Maven
+
+```xml
+<dependency>
+    <groupId>net.onedaybeard.graftt</groupId>
+    <artifactId>api</artifactId>
+    <version>${VERSION}</version>
+</dependency>
+```
+
+### Gradle
+
+```groovy
+implementation "net.onedaybeard.graftt:api:${VERSION}"
+```
+
+### Agent: Download
+
+`$ java -ea -javaagent:agent-${VERSION}-jar-with-dependencies.jar` ...
+
+ - [Snapshot](https://oss.sonatype.org/content/repositories/snapshots/net/onedaybeard/graftt/agent/) 
+ - [Release](http://repo1.maven.org/maven2/net/onedaybeard/graftt/agent) 
