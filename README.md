@@ -2,16 +2,20 @@
 
 Extend existing classes by grafting bytecode from *Transplant* classes. Transplants are
 plain java classes and function like templates or blueprints; annotations define interactions
-with the recipient class.
+with the recipient class. The entire API consists of 3 annotations.
 
 Transplants have complete access to the recipient class: Existing methods can be wrapped,
 changed or replaced entirely. Interfaces can be retrofitted and additional fields added.
  
-An agent (`java -javaagent:agent.jar`) applies transplants at load-time. Alternatively, 
-`graftt-maven-plugin` finds and applies transplants within `target/classes`.  
+An agent (`java -javaagent:agent-$VERSION.jar`) applies transplants at load-time.
+Alternatively, `graftt-maven-plugin` finds and applies transplants within `target/classes`.  
 
-Sprung from [artemis-odb/570](https://github.com/junkdog/artemis-odb/issues/570), refer to
-it for the discussion leading up to this.
+The `core` module can be used for building custom tools. It imposes few restrictions on
+usage and revolves around [ASM's](https://asm.ow2.io/) tree API. 
+
+
+_graftt_ sprung from [artemis-odb/570](https://github.com/junkdog/artemis-odb/issues/570),
+refer to it for the discussion leading up to this.
 
 
 ## Use-cases
