@@ -4,12 +4,11 @@ Extend existing classes by grafting bytecode from *Transplant* classes. Transpla
 plain java classes and function like templates or blueprints; annotations define interactions
 with the recipient class.
 
-Transplants have complete access to the recipient class. Existing methods can be wrapped,
-changed or replaced entirely.
-
+Transplants have complete access to the recipient class: Existing methods can be wrapped,
+changed or replaced entirely. Interfaces can be retrofitted and additional fields added.
+ 
 An agent (`java -javaagent:agent.jar`) applies transplants at load-time. Alternatively, 
 `graftt-maven-plugin` finds and applies transplants within `target/classes`.  
-
 
 Sprung from [artemis-odb/570](https://github.com/junkdog/artemis-odb/issues/570), refer to
 it for the discussion leading up to this.
