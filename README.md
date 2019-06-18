@@ -90,6 +90,9 @@ public class SomeClass {
 }
 ```
 
+More examples/documentation coming soon(?). Until then, refer to the 
+[tests](https://github.com/junkdog/graftt/blob/master/core/src/test/kotlin/net/onedaybeard/graftt/GraftTests.kt)
+
 ## API 
 
 - **`@Graft.Recipient`** specifies which class to transplant to.
