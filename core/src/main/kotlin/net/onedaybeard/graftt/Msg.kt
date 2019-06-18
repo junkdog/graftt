@@ -1,6 +1,5 @@
 package net.onedaybeard.graftt
 
-import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.MethodNode
 import kotlin.reflect.KClass
@@ -19,6 +18,7 @@ sealed class Msg {
     data class NoSuchKey(val key: String) : Msg()
 
     data class FieldAlreadyExists(val node: FieldNode) : Msg()
+    data class InterfaceAlreadyExists(val name: String) : Msg()
     data class MethodAlreadyExists(val node: MethodNode) : Msg()
     data class WrongFuseSignature(val node: MethodNode) : Msg()
 
@@ -26,4 +26,9 @@ sealed class Msg {
         val expected: KClass<*>,
         val actual: KClass<*>) : Msg()
 
+    fun toException() = when(this) {
+        is Error -> e
+        else     -> GraftException(this)
+    }
 }
+

@@ -23,11 +23,24 @@ fun <T> resultOf(vararg require: Result<*, Msg>, f: () -> T): Result<T, Msg> {
     }
 }
 
+@Suppress("UNCHECKED_CAST")
 /** Transforms [Msg] unless it is [Msg.Error] */
-fun <T> Result<T, Msg>.mapSafeError(f: (Msg) -> Msg) = when (val e = getError()) {
-    null         -> this
-    is Msg.Error -> this
-    else         -> Err(f(e))
+fun <T, U> Result<T, Msg>.mapSafeError(f: (Msg) -> U): Result<T, U> {
+    return when (val e = getError()) {
+        null         -> this
+        is Msg.Error -> this
+        else         -> Err(f(e))
+    } as Result<T, U>
+}
+
+@Suppress("UNCHECKED_CAST")
+/** Transforms [Msg] unless it is [Msg.Error] */
+fun <T> Result<T, Msg>.safeRecover(f: (Msg) -> T): Result<T, Msg> {
+    return when (val e = getError()) {
+        null        -> this
+        is Msg.None -> Ok(f(e))
+        else        -> this
+    }
 }
 
 /** Lazily chains multiple [Result]s into a list of all values or [Err] */

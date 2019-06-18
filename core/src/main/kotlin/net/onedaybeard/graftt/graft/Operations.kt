@@ -10,15 +10,21 @@ import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.MethodNode
 
 
-// todo: fix proper
-fun loadClassNode(type: Type) = resultOf {
-    Msg::class.java
-        .getResourceAsStream("/${type.internalName}.class")
-        .let(::classNode)
-}
-
 fun performGraft(donor: ClassNode, recipient: ClassNode): Result<ClassNode, Msg> {
-    val fusedMethods = resultOf { donor }
+    fun checkRecipientInterface(iface: String) =
+        if (iface !in recipient.interfaces)
+            Ok(iface)
+        else
+            Err(Msg.InterfaceAlreadyExists(iface))
+
+    val fusedInterfaces = donor.interfaces
+        .toResultOr { Msg.None }
+        .mapAll(::checkRecipientInterface)
+        .map { recipient.interfaces.addAll(it) }
+        .map { donor }
+        .safeRecover { donor }
+
+    val fusedMethods = resultOf(fusedInterfaces) { donor }
         .map(ClassNode::graftableMethods)
         .map { fns -> fns.map { Transplant.Method(donor.name, it) } }
         .mapAll(recipient::fuse)
@@ -32,10 +38,11 @@ fun performGraft(donor: ClassNode, recipient: ClassNode): Result<ClassNode, Msg>
         .andThen { verify(recipient) }
 }
 
-fun performGraft(donor: ClassNode): Result<ClassNode, Msg> {
+fun performGraft(donor: ClassNode,
+                 loadClassNode: (Type) -> Result<ClassNode, Msg>): Result<ClassNode, Msg> {
     return resultOf { donor }
         .andThen(::readRecipientType)
-        .andThen(::loadClassNode)
+        .andThen(loadClassNode)
         .andThen { recipient -> performGraft(donor, recipient) }
 }
 

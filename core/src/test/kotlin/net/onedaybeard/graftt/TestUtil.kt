@@ -5,28 +5,20 @@ import net.onedaybeard.graftt.graft.performGraft
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
 import kotlin.test.assertEquals
-import kotlin.test.fail
-
-
-fun doFail(msg: Msg) {
-    when (val m = msg) {
-        is Msg.Error -> throw m.e
-        else         -> fail(m.toString())
-    }
-}
-
-inline fun <reified T> transplant(): ClassNode {
-    return resultOf { classNode<T>() }      // donor
-        .andThen { performGraft(it) }       // recipient
-        .onFailure(::doFail)
-        .get()!!
-}
 
 
 data class FieldObserver<T>(
     val name: String,
     val original: T?,
     val updated: T?)
+
+
+inline fun <reified T> transplant(): ClassNode {
+    return resultOf { classNode<T>() }                             // donor
+        .andThen { donor -> performGraft(donor, ::loadClassNode) } // to recipient
+        .onFailure(`(╯°□°）╯︵ ┻━┻`)
+        .unwrap()
+}
 
 
 fun <T> observeField(name: String, oldToNew: Pair<T, T>): FieldObserver<T> {
@@ -42,8 +34,8 @@ fun <T> Any.method(name: String,
         .find { it.name == name }
         .toResultOr { Msg.NoSuchKey(name) }
         .andThen { resultOf { it.invoke(this, *params.toTypedArray()) } }
-        .onFailure(::doFail)
-        .get()
+        .onFailure(`(╯°□°）╯︵ ┻━┻`)
+        .unwrap()
 
     if (expected != null)
         assertEquals(expected, actual)
@@ -81,12 +73,11 @@ fun <T> Any.assertFieldValue(name: String, expected: T? = null) {
         .find { it.name == name }
         .toResultOr { Msg.NoSuchKey(name) }
         .andThen { resultOf { it.get(this) } }
-        .fold(
-            success = { if (expected != null) assertEquals(expected, it) },
-            failure = { doFail(it) })
+        .onFailure(`(╯°□°）╯︵ ┻━┻`)
+        .onSuccess { if (expected != null) assertEquals(expected, it) }
 }
 
-fun instantiate(cn: ClassNode, f: Any.() -> Unit): Any {
+fun instantiate(cn: ClassNode, f: Any.() -> Unit = {}): Any {
     val instance = ByteClassLoader().loadClass(cn).newInstance()
     f(instance)
     return instance

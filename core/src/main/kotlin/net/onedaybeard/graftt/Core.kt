@@ -12,12 +12,7 @@ import java.io.StringWriter
 import java.lang.RuntimeException
 
 @Suppress("NonAsciiCharacters")
-val `(╯°□°）╯︵ ┻━┻`: (Msg) -> Nothing = { msg ->
-    when (msg) {
-        is Msg.Error -> throw msg.e
-        else         -> throw RuntimeException(msg.toString())
-    }
-}
+val `(╯°□°）╯︵ ┻━┻`: (Msg) -> Nothing = { throw it.toException() }
 
 fun <T> anyOf(vararg predicates: (T) -> Boolean): (T) -> Boolean = { t -> predicates.any { it(t) } }
 fun <T> allOf(vararg predicates: (T) -> Boolean): (T) -> Boolean = { t -> predicates.all { it(t) } }
@@ -43,4 +38,11 @@ fun verify(cn: ClassNode, classLoader: ClassLoader? = null): Result<ClassNode, M
         ""   -> Ok(cn)
         else -> Err(Msg.ClassVerificationError(cn.qualifiedName, error))
     }
+}
+
+class GraftException(message: String, cause: Throwable? = null)
+    : RuntimeException(message, cause) {
+
+    constructor(message: Msg, cause: Throwable? = null)
+        : this(message.toString(), cause)
 }
