@@ -1,6 +1,6 @@
 # graftt - annotation-driven bytecode surgery 
 
-Extend existing classes by grafting bytecode from *Transplant* classes. Transplants are
+Rewrite existing classes by grafting bytecode from *Transplant* classes. Transplants are
 plain java classes and function like templates or blueprints; annotations define interactions
 with the recipient class. The entire API consists of 3 annotations.
 
