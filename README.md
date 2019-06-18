@@ -20,6 +20,8 @@ it for the discussion leading up to this.
 - Additional debugging capabilities: logging, record stack traces, additional callbacks
 - Extending existing functionality for final or otherwise non-extendable classes
 - The odd bug fix in imported dependencies
+- Add or modify `hashcode()` and `toString()`
+- Retrofit classes with additional interfaces 
 
 
 ## Example Transplant for SomeClass
@@ -88,12 +90,16 @@ public class SomeClass {
 ## API 
 
 - **`@Graft.Recipient`** specifies which class to transplant to.
-- **`@Graft.Fuse`** transplants bytecode over to `@Graft.Recipient`, translating any references to `ComponentMapperTransplant` -> `ComponentMapper`.
-- **`@Graft.Mock`** to keep the compiler happy when you need to reference fields or methods in the target class. Mocked references point to target class after transplant.
+- **`@Graft.Fuse`** transplants bytecode over to `@Graft.Recipient`, translating any
+  `FooTransplant` references to `Foo`. Call the original method at any time by invoking the
+  method currently being fused; e.g. Fusing `FooTransplant::bar` with `Foo::bar`, any
+  call to `bar()` inside the transplant will point to `Foo::bar$original` once applied.
+- **`@Graft.Mock`** to keep the compiler happy when you need to reference fields or
+  methods in the target class. Mocked references point to target class after transplant.
 - Any non-annotated methods or fields are copied over as-is.
+- All interfaces are copied over to recipient.
 
 Nice to have, but not now:
-- ~~**`@Graft.Replace`**: Like `@Graft.Fuse` but removes the original method.~~ Better to resolve it when applying `@Graft.Fuse`.
 - **`@Graft.Remove`**: Remove field or method from target class.
 
 ## Caveats
