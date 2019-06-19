@@ -2,53 +2,37 @@ package net.onedaybeard.graftt
 
 import org.junit.Ignore
 import org.junit.Test
-import kotlin.test.fail
 
 @Ignore("not yet implemented features")
 class IgnoredGraftTests {
 
     @Test
-    fun `fusing without calling original method deletes it`() {
-        fail()
-    }
-
-    @Test
     fun `remove field`() {
-        fail()
+        TODO("@Graft.Remove")
     }
 
     @Test
     fun `remove method`() {
-        fail()
+        TODO("@Graft.Remove")
     }
 
     @Test
     fun `combine multiple transplants sharing the same recipient`() {
-        fail()
-    }
-
-    @Test
-    fun `replace constructor`() {
-        fail()
+        TODO("method\$original should be rewritten as method\$original2")
     }
 
     @Test
     fun `append to constructor`() {
-        fail()
-    }
-
-    @Test
-    fun `graft a new interface`() {
-        fail()
-    }
-
-    @Test
-    fun `remove interface`() {
-        fail()
+        TODO("method\$original should be rewritten as method\$original2")
     }
 
     @Test
     fun `replace parent class`() {
-        fail()
+        TODO("must be able to prepend instructions before any RETURN")
+    }
+
+    @Test
+    fun `initialize fields with non-primitive value`() {
+        TODO("must be able to append to initializer")
     }
 }

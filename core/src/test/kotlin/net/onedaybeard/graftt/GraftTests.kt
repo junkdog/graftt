@@ -85,7 +85,7 @@ class GraftTests {
     }
 
     @Test
-    fun `remove original method when not called by transplant`() {
+    fun `fusing without calling original method deletes it`() {
         val recipient = transplant<ReplaceOriginalTransplant>()
         instantiate(recipient) {
             assertEquals(true, invokeMethod("hmm")!!)
@@ -107,6 +107,18 @@ class GraftTests {
             .andThen { donor -> performGraft(donor, ::loadClassNode) } // to recipient
             .onFailure { assertEquals(Msg.InterfaceAlreadyExists::class, it::class) }
             .onSuccess { fail("copying already implemented interfaces to recipient must fail") }
+    }
+
+    @Test
+    fun `mocks can refer to method in recipients parent class`() {
+        val recipient = transplant<MockParentMethodImplTransplant>()
+        assertEquals(0xf00.toString(), instantiate(recipient).toString())
+    }
+
+    @Test
+    fun `mocks can refer to field in recipients parent class`() {
+        val recipient = transplant<MockParentFieldImplTransplant>()
+        assertEquals(0xba4.toString(), instantiate(recipient).toString())
     }
 }
 
