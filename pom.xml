@@ -127,6 +127,13 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>ide-integration-tests</id>
+            <modules>
+                <module>graftt-maven-plugin/src/it/graftt-maven-plugin-test</module>
+                <module>agent/src/it/agent-no-params</module>
+            </modules>
+        </profile>
     </profiles>
 
     <build>
