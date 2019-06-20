@@ -7,7 +7,7 @@
             <properties>
                 <local.repo>${project.build.directory}/../../../local-repo</local.repo>
                 <agent.path>net/onedaybeard/graftt/agent/${project.version}</agent.path>
-                <agent.file>agent-${project.version}-jar-with-dependencies.jar</agent.file>
+                <agent.file>agent-${project.version}.jar</agent.file>
                 <agent.jar>${local.repo}/${agent.path}/${agent.file}</agent.jar>
             </properties>
 
