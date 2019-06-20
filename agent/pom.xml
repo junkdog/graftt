@@ -56,7 +56,7 @@
                             <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
                         </manifest>
                         <manifestEntries>
-                            <Premain-Class>net.onedaybeard.graftt.agent.GraftAgent</Premain-Class>
+                            <Premain-Class>net.onedaybeard.graftt.agent.GraftAgentKt</Premain-Class>
                         </manifestEntries>
                     </archive>
                 </configuration>
