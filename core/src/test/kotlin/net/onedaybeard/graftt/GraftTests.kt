@@ -102,6 +102,13 @@ class GraftTests {
     }
 
     @Test
+    fun `generic interfaces transplanted to recipient`() {
+        val recipient = transplant<RetrofitGenericInterface.FooTransplant>()
+        val p = instantiate(recipient) as InterfaceT<Boolean>
+        assertEquals(true, p.helloT())
+    }
+
+    @Test
     fun `fail when transplanting interfaces already on recipient class`() {
         resultOf { classNode<AlreadyHaveInterfaceTransplant>() }       // donor
             .andThen { donor -> performGraft(donor, ::loadClassNode) } // to recipient

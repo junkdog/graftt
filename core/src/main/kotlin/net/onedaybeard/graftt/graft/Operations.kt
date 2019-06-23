@@ -46,10 +46,12 @@ fun performGraft(donor: ClassNode,
         .andThen { recipient -> performGraft(donor, recipient) }
 }
 
+/** rewrites this [ClassNode] according to [method] transplant */
 fun ClassNode.graft(method: Transplant.Method) {
     methods.add(graft(name, method))
 }
 
+/** rewrites this [ClassNode] according to [field] transplant */
 fun ClassNode.graft(field: Transplant.Field) {
     fields.add(field.node.copy())
 }
@@ -64,7 +66,7 @@ private fun graft(name: String, transplant: Transplant.Method): MethodNode {
     return mn
 }
 
-
+/** apply [transplant] to this [ClassNode] */
 fun ClassNode.fuse(transplant: Transplant.Field): Result<ClassNode, Msg> {
     if (methods.any { it.name == transplant.node.name })
         return Err(Msg.FieldAlreadyExists(transplant.node))
