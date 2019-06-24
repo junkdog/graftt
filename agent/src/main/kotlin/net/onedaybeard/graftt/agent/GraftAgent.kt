@@ -34,9 +34,9 @@ fun premain(agentArgs: String?, inst: Instrumentation) {
 
             classNodes(root)
                 .filter(ClassNode::isTransplant)
-                .also { log.info { "found ${it.size} transplants" } }
                 .associateByTo(transplants) { cn ->
-                    readRecipientType(cn).unwrap().className
+                    readRecipientType(cn).unwrap().internalName
+                        .also { log.debug { "found transplant: $it" } }
                 }
         }
 
@@ -52,7 +52,7 @@ fun premain(agentArgs: String?, inst: Instrumentation) {
             readRecipientType(cn)
                 .onSuccess { type ->
                     val name = type.internalName
-                    log.info { "classloader touching transplant: $name" }
+                    log.debug { "classloader touching transplant: $name" }
                     transplants[name] = cn
                 }
 
@@ -80,9 +80,9 @@ private fun validate(args: Map<String, List<String>>) {
 private fun parseArgs(rawArgs: String?): Map<String, List<String>> {
     if (rawArgs == null) return mapOf()
 
-    fun String.token(index: Int) = split("=")[index]
+    fun String.token(index: Int) = split(":")[index]
 
     return rawArgs
         .split(",")
-        .associate { s -> s.token(0) to s.token(1).split(":")  }
+        .associate { s -> s.token(0) to s.token(1).split(";")  }
 }

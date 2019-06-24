@@ -134,6 +134,7 @@
                 <module>graftt-maven-plugin/src/it/transplants-in-directory</module>
                 <module>graftt-maven-plugin/src/it/transplants-in-dependency</module>
                 <module>agent/src/it/agent-no-params</module>
+                <module>agent/src/it/external-transplants</module>
             </modules>
         </profile>
     </profiles>
