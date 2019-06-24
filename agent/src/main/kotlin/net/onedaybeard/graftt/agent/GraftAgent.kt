@@ -1,25 +1,43 @@
 package net.onedaybeard.graftt.agent
 
-import com.github.michaelbull.result.map
-import com.github.michaelbull.result.onFailure
-import com.github.michaelbull.result.onSuccess
-import com.github.michaelbull.result.unwrap
-import net.onedaybeard.graftt.`(╯°□°）╯︵ ┻━┻`
-import net.onedaybeard.graftt.classNode
-import net.onedaybeard.graftt.graft.performGraft
+import com.github.michaelbull.result.*
+import net.onedaybeard.graftt.*
+import net.onedaybeard.graftt.graft.isTransplant
+import net.onedaybeard.graftt.graft.transplant
 import net.onedaybeard.graftt.graft.readRecipientType
-import net.onedaybeard.graftt.toBytes
 import org.objectweb.asm.tree.ClassNode
+import java.io.File
 import java.lang.instrument.ClassFileTransformer
 import java.lang.instrument.Instrumentation
 import java.security.ProtectionDomain
 
+
 fun premain(agentArgs: String?, inst: Instrumentation) {
+
     inst.addTransformer(object : ClassFileTransformer {
+        val log = makeLogger()
+
         val transplants: MutableMap<String, ClassNode> = mutableMapOf()
 
         init {
-            println("graftt agent preparing for surgery...")
+            log.info { "graftt agent preparing for surgery..." }
+
+            parseArgs(agentArgs)
+                .also(::validate)
+                .let { args -> args["classpath"] ?: args["cp"] ?: listOf() }
+                .map(::File)
+                .forEach(this::register)
+        }
+
+        fun register(root: File) {
+            log.info { "searching for transplants: $root" }
+
+            classNodes(root)
+                .filter(ClassNode::isTransplant)
+                .also { log.info { "found ${it.size} transplants" } }
+                .associateByTo(transplants) { cn ->
+                    readRecipientType(cn).unwrap().className
+                }
         }
 
         override fun transform(
@@ -32,14 +50,39 @@ fun premain(agentArgs: String?, inst: Instrumentation) {
             val cn = classNode(classfileBuffer)
 
             readRecipientType(cn)
-                .onSuccess { transplants[it.internalName] = cn }
+                .onSuccess { type ->
+                    val name = type.internalName
+                    log.info { "classloader touching transplant: $name" }
+                    transplants[name] = cn
+                }
 
             return transplants[className]?.let { donor ->
-                performGraft(donor, classNode(classfileBuffer))
+                transplant(donor, classNode(classfileBuffer))
                     .map(ClassNode::toBytes)
                     .onFailure(`(╯°□°）╯︵ ┻━┻`)
+                    .onSuccess { log.info { "transplant complete: $donor" } }
                     .unwrap()
             } ?: classfileBuffer
         }
     })
+}
+
+private fun validate(args: Map<String, List<String>>) {
+    if (args.isEmpty()) return
+
+    val valid = listOf("classpath", "cp")
+
+    val invalid = args.filterKeys { it !in valid }
+    if (invalid.isNotEmpty())
+        throw IllegalArgumentException("$valid are valid parameters, found: ${invalid.keys}")
+}
+
+private fun parseArgs(rawArgs: String?): Map<String, List<String>> {
+    if (rawArgs == null) return mapOf()
+
+    fun String.token(index: Int) = split("=")[index]
+
+    return rawArgs
+        .split(",")
+        .associate { s -> s.token(0) to s.token(1).split(":")  }
 }
