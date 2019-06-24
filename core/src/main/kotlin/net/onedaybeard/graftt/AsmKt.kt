@@ -28,6 +28,8 @@ val Class<*>.internalName: String
 /** compatible with [Class.forName] */
 val ClassNode.qualifiedName: String
     get() = type.className
+val ClassNode.shortName: String
+    get() = qualifiedName.substringAfterLast(".")
 
 val ClassNode.type: Type
     get() = Type.getType("L${name.replace('/', '.')};")

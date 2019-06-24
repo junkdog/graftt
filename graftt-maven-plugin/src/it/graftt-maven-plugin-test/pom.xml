@@ -28,6 +28,18 @@
     </repositories>
 
     <dependencies>
+        <!-- artifacts with transplants can be added as a dependencies -->
+        <!-- to the plugin's dependency element - however, for jar -->
+        <!-- file resolution to work, a project-level dependency  -->
+        <!-- with provided scope is required -->
+        <dependency>
+            <groupId>com.badlogicgames.gdx</groupId>
+            <artifactId>gdx</artifactId>
+            <version>1.9.9</version>
+            <scope>provided</scope>
+        </dependency>
+
+
         <dependency>
             <groupId>net.onedaybeard.graftt</groupId>
             <artifactId>api</artifactId>
@@ -75,11 +87,30 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <!-- also exposed as system property -Dgraftt.enable=true -->
-                    <!--
+                    <!-- also exposed as system property -Dgraftt.enable=true
+
                     <enable>true</enable>
                     -->
+
+                    <!-- paths to root of class directories or .jar files
+
+                    <paths>
+                        <path>
+                            /path/to/jar
+                        </path>
+                        <path>
+                            /path/to/root/classes/dir/
+                        </path>
+                    </paths>
+                    -->
                 </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.badlogicgames.gdx</groupId>
+                        <artifactId>gdx</artifactId>
+                        <version>1.9.9</version>
+                    </dependency>
+                </dependencies>
             </plugin>
         </plugins>
     </build>

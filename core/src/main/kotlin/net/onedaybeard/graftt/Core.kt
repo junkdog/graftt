@@ -7,9 +7,13 @@ import org.objectweb.asm.ClassReader
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.util.CheckClassAdapter
 import org.objectweb.asm.util.TraceClassVisitor
+import java.io.File
+import java.io.FileNotFoundException
 import java.io.PrintWriter
 import java.io.StringWriter
+import java.lang.IllegalStateException
 import java.lang.RuntimeException
+import java.util.zip.ZipFile
 
 @Suppress("NonAsciiCharacters")
 val `(╯°□°）╯︵ ┻━┻`: (Msg) -> Nothing = { throw it.toException() }
@@ -40,9 +44,37 @@ fun verify(cn: ClassNode, classLoader: ClassLoader? = null): Result<ClassNode, M
     }
 }
 
+/** reads all classes, where [root] points to a root directory or jar file */
+fun classNodes(root: File): List<ClassNode> = when {
+    root.exists().not()     -> throw FileNotFoundException(root.path)
+    root.isDirectory        -> classesDir(root)
+    root.extension == "jar" -> classesJar(root)
+    else                    -> throw IllegalStateException(root.path)
+}
+
+
+private fun classesJar(root: File): List<ClassNode> {
+    return ZipFile(root).use { archive ->
+        archive.entries()
+            .asSequence()
+            .filter { it.name.endsWith(".class") }
+            .map(archive::getInputStream)
+            .map(::classNode)
+            .toList()
+    }
+}
+
+private fun classesDir(root: File): List<ClassNode> {
+    return root.walk()
+        .filter { it.extension == "class" }
+        .map(::classNode)
+        .toList()
+}
+
 class GraftException(message: String, cause: Throwable? = null)
     : RuntimeException(message, cause) {
 
     constructor(message: Msg, cause: Throwable? = null)
         : this(message.toString(), cause)
 }
+

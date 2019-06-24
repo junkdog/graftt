@@ -92,6 +92,7 @@
                     <localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>
                     <postBuildHookScript>verify</postBuildHookScript> <!-- no extension required -->
                     <settingsFile>src/it/settings.xml</settingsFile>
+                    <mavenOpts>-ea</mavenOpts>
                 </configuration>
                 <executions>
                     <execution>

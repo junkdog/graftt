@@ -119,6 +119,9 @@ fun ClassNode.graftableMethods() = methods
 fun ClassNode.graftableFields() = fields
         .filterNot { it.hasAnnotation(type<Graft.Mock>()) }
 
+val ClassNode.isTransplant: Boolean
+    get() = readRecipientType(this).get() != null
+
 fun readRecipientType(donor: ClassNode): Result<Type, Msg> {
     return donor
         .invisibleAnnotations.toResultOr { Msg.None }
