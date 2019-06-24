@@ -13,10 +13,10 @@ Alternatively, `graftt-maven-plugin` finds and applies transplants within `targe
 The `core` module can be used for building custom tools. It imposes few restrictions on
 usage and revolves around [ASM's](https://asm.ow2.io/) tree API. 
 
-
 _graftt_ sprung from [artemis-odb/570](https://github.com/junkdog/artemis-odb/issues/570),
 refer to it for the discussion leading up to this.
 
+See [wiki](https://github.com/junkdog/graftt/wiki) for more documentation.
 
 ## Use-cases
 - Functionality for editors: callbacks and tighter tooling integration
