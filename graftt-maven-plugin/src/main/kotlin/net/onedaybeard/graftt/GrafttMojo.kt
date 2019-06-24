@@ -2,7 +2,7 @@ package net.onedaybeard.graftt
 
 import com.github.michaelbull.result.*
 import net.onedaybeard.graftt.graft.isTransplant
-import net.onedaybeard.graftt.graft.performGraft
+import net.onedaybeard.graftt.graft.transplant
 import net.onedaybeard.graftt.graft.readRecipientType
 import org.apache.maven.artifact.Artifact
 import org.apache.maven.model.Dependency
@@ -110,7 +110,7 @@ class GrafttMojo : AbstractMojo() {
         resultOf { donor }
             .andThen(::readRecipientType)
             .andThen(this::loadClassNode)
-            .andThen { recipient -> performGraft(donor, recipient) }
+            .andThen { recipient -> transplant(donor, recipient) }
             .andThen(this::save)
             .onFailure(`(╯°□°）╯︵ ┻━┻`)
     }

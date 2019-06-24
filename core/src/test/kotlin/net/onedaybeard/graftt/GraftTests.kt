@@ -3,7 +3,7 @@ package net.onedaybeard.graftt
 import com.github.michaelbull.result.andThen
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
-import net.onedaybeard.graftt.graft.performGraft
+import net.onedaybeard.graftt.graft.transplant
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.fail
@@ -111,7 +111,7 @@ class GraftTests {
     @Test
     fun `fail when transplanting interfaces already on recipient class`() {
         resultOf { classNode<AlreadyHaveInterfaceTransplant>() }       // donor
-            .andThen { donor -> performGraft(donor, ::loadClassNode) } // to recipient
+            .andThen { donor -> transplant(donor, ::loadClassNode) } // to recipient
             .onFailure { assertEquals(Msg.InterfaceAlreadyExists::class, it::class) }
             .onSuccess { fail("copying already implemented interfaces to recipient must fail") }
     }

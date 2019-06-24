@@ -1,7 +1,7 @@
 package net.onedaybeard.graftt
 
 import com.github.michaelbull.result.*
-import net.onedaybeard.graftt.graft.performGraft
+import net.onedaybeard.graftt.graft.transplant
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
 import kotlin.test.assertEquals
@@ -15,7 +15,7 @@ data class FieldObserver<T>(
 
 inline fun <reified T> transplant(): ClassNode {
     return resultOf { classNode<T>() }                             // donor
-        .andThen { donor -> performGraft(donor, ::loadClassNode) } // to recipient
+        .andThen { donor -> transplant(donor, ::loadClassNode) } // to recipient
         .onFailure(`(╯°□°）╯︵ ┻━┻`)
         .unwrap()
 }

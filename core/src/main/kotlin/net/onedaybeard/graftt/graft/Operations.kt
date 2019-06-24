@@ -10,7 +10,7 @@ import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.MethodNode
 
 
-fun performGraft(donor: ClassNode, recipient: ClassNode): Result<ClassNode, Msg> {
+fun transplant(donor: ClassNode, recipient: ClassNode): Result<ClassNode, Msg> {
     fun checkRecipientInterface(iface: String) =
         if (iface !in recipient.interfaces)
             Ok(iface)
@@ -38,12 +38,12 @@ fun performGraft(donor: ClassNode, recipient: ClassNode): Result<ClassNode, Msg>
         .andThen { verify(recipient) }
 }
 
-fun performGraft(donor: ClassNode,
-                 loadClassNode: (Type) -> Result<ClassNode, Msg>): Result<ClassNode, Msg> {
+fun transplant(donor: ClassNode,
+               loadClassNode: (Type) -> Result<ClassNode, Msg>): Result<ClassNode, Msg> {
     return resultOf { donor }
         .andThen(::readRecipientType)
         .andThen(loadClassNode)
-        .andThen { recipient -> performGraft(donor, recipient) }
+        .andThen { recipient -> transplant(donor, recipient) }
 }
 
 /** rewrites this [ClassNode] according to [method] transplant */
