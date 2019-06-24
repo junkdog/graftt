@@ -16,34 +16,16 @@
     </properties>
 
 
-    <artifactId>graftt-maven-plugin-test</artifactId>
+    <artifactId>transplants-in-target-classes</artifactId>
     <packaging>jar</packaging>
     <name>graftt - maven plugin test</name>
 
-    <repositories>
-        <repository>
-            <id>result type</id>
-            <url>https://dl.bintray.com/michaelbull/maven</url>
-        </repository>
-    </repositories>
-
     <dependencies>
-        <!-- artifacts with transplants can be added as a dependencies -->
-        <!-- to the plugin's dependency element - however, for jar -->
-        <!-- file resolution to work, a project-level dependency  -->
-        <!-- with provided scope is required -->
-        <dependency>
-            <groupId>com.badlogicgames.gdx</groupId>
-            <artifactId>gdx</artifactId>
-            <version>1.9.9</version>
-            <scope>provided</scope>
-        </dependency>
-
-
         <dependency>
             <groupId>net.onedaybeard.graftt</groupId>
             <artifactId>api</artifactId>
             <version>${project.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -104,13 +86,6 @@
                     </paths>
                     -->
                 </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>com.badlogicgames.gdx</groupId>
-                        <artifactId>gdx</artifactId>
-                        <version>1.9.9</version>
-                    </dependency>
-                </dependencies>
             </plugin>
         </plugins>
     </build>

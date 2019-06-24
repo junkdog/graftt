@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>net.onedaybeard.graftt</groupId>
+        <artifactId>transplants-in-directory</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <properties>
+         <!-- system property, defaults to true -->
+        <graft.enable>true</graft.enable>
+    </properties>
+
+
+    <artifactId>dir-app</artifactId>
+    <packaging>jar</packaging>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.1.1</version>
+                <executions>
+                    <execution>
+                        <id>unpack</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>${project.groupId}</groupId>
+                                    <artifactId>dir-transplants</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>jar</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${project.build.directory}/transplants</outputDirectory>
+                                    <includes>**/*Transplant.class</includes>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>net.onedaybeard.graftt</groupId>
+                <artifactId>graftt-maven-plugin</artifactId>
+                <version>${project.version}</version>
+                <executions>
+                    <execution>
+                        <id>graftt</id>
+                        <goals>
+                            <goal>graftt</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <!-- also exposed as system property -Dgraftt.enable=true
+
+                    <enable>true</enable>
+                    -->
+
+                    <!-- paths to root of class directories or .jar files -->
+
+                    <paths>
+                        <path>${project.build.directory}/transplants</path>
+                    </paths>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

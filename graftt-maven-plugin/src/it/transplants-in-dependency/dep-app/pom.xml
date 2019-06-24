@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>net.onedaybeard.graftt</groupId>
+        <artifactId>transplants-in-dependency</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <properties>
+         <!-- system property, defaults to true -->
+        <graft.enable>true</graft.enable>
+    </properties>
+
+
+    <artifactId>dep-app</artifactId>
+    <packaging>jar</packaging>
+
+    <dependencies>
+
+        <!-- artifacts with transplants can be added as a dependencies -->
+        <!-- to the plugin's dependency element - however, for jar -->
+        <!-- file resolution to work, a project-level dependency  -->
+        <!-- with provided scope is required -->
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>dep-transplants</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>net.onedaybeard.graftt</groupId>
+                <artifactId>graftt-maven-plugin</artifactId>
+                <version>${project.version}</version>
+                <executions>
+                    <execution>
+                        <id>graftt</id>
+                        <goals>
+                            <goal>graftt</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <!-- see comment at //dependencies/dependency -->
+                    <dependency>
+                        <groupId>${project.groupId}</groupId>
+                        <artifactId>dep-transplants</artifactId>
+                        <version>${project.version}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

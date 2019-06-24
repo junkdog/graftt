@@ -130,7 +130,9 @@
         <profile>
             <id>ide-integration-tests</id>
             <modules>
-                <module>graftt-maven-plugin/src/it/graftt-maven-plugin-test</module>
+                <module>graftt-maven-plugin/src/it/transplants-in-target-classes</module>
+                <module>graftt-maven-plugin/src/it/transplants-in-directory</module>
+                <module>graftt-maven-plugin/src/it/transplants-in-dependency</module>
                 <module>agent/src/it/agent-no-params</module>
             </modules>
         </profile>
