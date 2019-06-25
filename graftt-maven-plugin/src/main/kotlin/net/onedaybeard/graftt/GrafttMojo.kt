@@ -56,7 +56,7 @@ class GrafttMojo : AbstractMojo() {
         project.buildPlugins
             .first { it.artifactId == "graftt-maven-plugin" }
             .let { it.dependencies ?: listOf() }
-            .map { it.toArtifact()}
+            .map { it.toArtifact() }
             .map { it.file ?: throw FileNotFoundException("$it") }
             .onEach { log.debug("donor preparing: ${it.path}") }
             .flatMapTo(transplants, ::classNodes)

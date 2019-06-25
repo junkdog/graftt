@@ -8,10 +8,8 @@ class IntegrationTests {
 
     @Test
     fun `transplanting gdx Vector2f`() {
-        val v = makeVector(1f, 2f)
-        assertEquals("overloaded: (1.0,2.0)", v.toString())
+        assertEquals(
+            "overloaded: (1.0,2.0)",
+            Vector2(1f, 2f).toString())
     }
-
 }
-
-fun makeVector(x: Float, y: Float) = Vector2(x, y)

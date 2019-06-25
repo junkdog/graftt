@@ -50,11 +50,8 @@ fun premain(agentArgs: String?, inst: Instrumentation) {
             val cn = classNode(classfileBuffer)
 
             readRecipientType(cn)
-                .onSuccess { type ->
-                    val name = type.internalName
-                    log.debug { "classloader touching transplant: $name" }
-                    transplants[name] = cn
-                }
+                .onSuccess { log.debug { "classloader touching transplant: ${it.internalName}" } }
+                .onSuccess { type -> transplants[type.internalName] = cn }
 
             return transplants[className]?.let { donor ->
                 transplant(donor, classNode(classfileBuffer))

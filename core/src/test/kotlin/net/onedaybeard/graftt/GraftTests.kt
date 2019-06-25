@@ -102,6 +102,15 @@ class GraftTests {
     }
 
     @Test
+    fun `method visibility changed when retrofitting interface`() {
+        val recipient = transplant<PromoteVisibilityWhenRetrofittingInterface.FooTransplant>()
+        val p = instantiate(recipient) as Point
+        assertEquals(2, p.x())
+        assertEquals(4, p.y())
+        assertEquals("x: 2, y: 4", p.toString())
+    }
+
+    @Test
     fun `generic interfaces transplanted to recipient`() {
         val recipient = transplant<RetrofitGenericInterface.FooTransplant>()
         val p = instantiate(recipient) as InterfaceT<Boolean>

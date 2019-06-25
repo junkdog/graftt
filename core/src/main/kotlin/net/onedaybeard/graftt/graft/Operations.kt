@@ -39,7 +39,9 @@ fun transplant(donor: ClassNode, recipient: ClassNode): Result<ClassNode, Msg> {
 }
 
 fun transplant(donor: ClassNode,
-               loadClassNode: (Type) -> Result<ClassNode, Msg>): Result<ClassNode, Msg> {
+               loadClassNode: (Type) -> Result<ClassNode, Msg>
+): Result<ClassNode, Msg> {
+
     return resultOf { donor }
         .andThen(::readRecipientType)
         .andThen(loadClassNode)

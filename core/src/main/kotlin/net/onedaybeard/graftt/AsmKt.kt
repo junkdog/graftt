@@ -59,8 +59,7 @@ fun FieldNode.copy() = FieldNode(
 ////// methods
 
 fun MethodNode.signatureEquals(other: MethodNode): Boolean {
-    return access    == other.access
-        && name      == other.name
+    return name      == other.name
         && desc      == other.desc
         && signature == other.signature
 }
