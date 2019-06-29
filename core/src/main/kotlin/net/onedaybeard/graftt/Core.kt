@@ -15,7 +15,7 @@ import java.lang.IllegalStateException
 import java.lang.RuntimeException
 import java.util.zip.ZipFile
 
-@Suppress("NonAsciiCharacters")
+@Suppress("NonAsciiCharacters", "ObjectPropertyName", "unused")
 val `(╯°□°）╯︵ ┻━┻`: (Msg) -> Nothing = { throw it.toException() }
 
 fun <T> anyOf(vararg predicates: (T) -> Boolean): (T) -> Boolean = { t -> predicates.any { it(t) } }

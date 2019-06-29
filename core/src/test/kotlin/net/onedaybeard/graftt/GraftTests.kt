@@ -110,7 +110,7 @@ class GraftTests {
         assertEquals("x: 2, y: 4", p.toString())
     }
 
-    @Test
+    @Test @Suppress("UNCHECKED_CAST")
     fun `generic interfaces transplanted to recipient`() {
         val recipient = transplant<RetrofitGenericInterface.FooTransplant>()
         val p = instantiate(recipient) as InterfaceT<Boolean>
@@ -119,7 +119,7 @@ class GraftTests {
 
     @Test
     fun `fail when transplanting interfaces already on recipient class`() {
-        resultOf { classNode<AlreadyHaveInterfaceTransplant>() }       // donor
+        resultOf { classNode<AlreadyHaveInterfaceTransplant>() }     // donor
             .andThen { donor -> transplant(donor, ::loadClassNode) } // to recipient
             .onFailure { assertEquals(Msg.InterfaceAlreadyExists::class, it::class) }
             .onSuccess { fail("copying already implemented interfaces to recipient must fail") }

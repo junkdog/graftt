@@ -9,7 +9,16 @@ import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.MethodNode
 
-
+/**
+ * Remaps graftable bytecode from [donor] to this [recipient].
+ *
+ * All interfaces, methods and fields are transplanted, except
+ * those annotated with [Graft.Mock]. Fields and methods are
+ * transplanted with [ClassNode.fuse]
+ *
+ * As the [recipient] is known, [Graft.Recipient] is not required
+ * on [donor].
+ */
 fun transplant(donor: ClassNode, recipient: ClassNode): Result<ClassNode, Msg> {
     fun checkRecipientInterface(iface: String) =
         if (iface !in recipient.interfaces)
@@ -38,6 +47,10 @@ fun transplant(donor: ClassNode, recipient: ClassNode): Result<ClassNode, Msg> {
         .andThen { verify(recipient) }
 }
 
+/**
+ * Remaps graftable bytecode from [donor] to the [Graft.Recipient] it
+ * points to. The recipient is resolved in [loadClassNode].
+ */
 fun transplant(donor: ClassNode,
                loadClassNode: (Type) -> Result<ClassNode, Msg>
 ): Result<ClassNode, Msg> {
@@ -48,25 +61,6 @@ fun transplant(donor: ClassNode,
         .andThen { recipient -> transplant(donor, recipient) }
 }
 
-/** rewrites this [ClassNode] according to [method] transplant */
-fun ClassNode.graft(method: Transplant.Method) {
-    methods.add(graft(name, method))
-}
-
-/** rewrites this [ClassNode] according to [field] transplant */
-fun ClassNode.graft(field: Transplant.Field) {
-    fields.add(field.node.copy())
-}
-
-private fun graft(name: String, transplant: Transplant.Method): MethodNode {
-    val original = transplant.node
-    val mn = original.copy(copyInsn = false)
-
-    val remapper = SimpleRemapper(transplant.donor, name)
-    original.accept(MethodRemapper(mn, remapper))
-
-    return mn
-}
 
 /** apply [transplant] to this [ClassNode] */
 fun ClassNode.fuse(transplant: Transplant.Field): Result<ClassNode, Msg> {
@@ -113,17 +107,20 @@ fun ClassNode.fuse(transplant: Transplant.Method): Result<ClassNode, Msg> {
 }
 
 
+/** all methods except mocked, constructor and static initializer */
 fun ClassNode.graftableMethods() = methods
         .filterNot { it.hasAnnotation(type<Graft.Mock>()) }
         .filterNot { "<init>" in it.name }
         .filterNot { "<clinit>" in it.name }
 
+/** all fields except mocked */
 fun ClassNode.graftableFields() = fields
         .filterNot { it.hasAnnotation(type<Graft.Mock>()) }
 
 val ClassNode.isTransplant: Boolean
     get() = readRecipientType(this).get() != null
 
+/** scans [donor] for [Graft.Recipient] and returns its [Type] */
 fun readRecipientType(donor: ClassNode): Result<Type, Msg> {
     return donor
         .invisibleAnnotations.toResultOr { Msg.None }
@@ -132,3 +129,23 @@ fun readRecipientType(donor: ClassNode): Result<Type, Msg> {
         .mapSafeError { Msg.MissingGraftTargetAnnotation(donor.name) }
 }
 
+
+/** rewrites this [ClassNode] according to [method] transplant */
+private fun ClassNode.graft(method: Transplant.Method) {
+    methods.add(graft(name, method))
+}
+
+/** rewrites this [ClassNode] according to [field] transplant */
+private fun ClassNode.graft(field: Transplant.Field) {
+    fields.add(field.node.copy())
+}
+
+private fun graft(name: String, transplant: Transplant.Method): MethodNode {
+    val original = transplant.node
+    val mn = original.copy(copyInsn = false)
+
+    val remapper = SimpleRemapper(transplant.donor, name)
+    original.accept(MethodRemapper(mn, remapper))
+
+    return mn
+}

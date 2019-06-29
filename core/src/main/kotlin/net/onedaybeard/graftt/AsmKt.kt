@@ -139,7 +139,7 @@ fun classNode(stream: InputStream) = classNode(classReader(stream))
 fun classNode(file: File) = classNode(classReader(file))
 
 inline fun <reified T> type() = type(T::class)
-fun type(cls: KClass<*>) = Type.getType(cls.java)
+fun type(cls: KClass<*>) = Type.getType(cls.java)!!
 
 
 private operator fun List<AnnotationNode>?.contains(type: Type) = when(this) {

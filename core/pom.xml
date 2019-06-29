@@ -14,22 +14,25 @@
     <packaging>jar</packaging>
     <name>graftt - core</name>
 
-    <repositories>
-        <repository>
-            <id>result type</id>
-            <url>https://dl.bintray.com/michaelbull/maven</url>
-        </repository>
-    </repositories>
-
     <properties>
         <asm.version>7.1</asm.version>
+        <dokka.version>0.9.18</dokka.version>
     </properties>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>jcenter</id>
+            <name>JCenter</name>
+            <url>https://jcenter.bintray.com/</url>
+        </pluginRepository>
+    </pluginRepositories>
+
 
     <dependencies>
         <dependency>
-          <groupId>com.michael-bull.kotlin-result</groupId>
-          <artifactId>kotlin-result</artifactId>
-          <version>1.1.1</version>
+            <groupId>com.michael-bull.kotlin-result</groupId>
+            <artifactId>kotlin-result</artifactId>
+            <version>1.1.1</version>
         </dependency>
 
         <!-- ASM -->
@@ -128,5 +131,64 @@
         </dependency>
     </dependencies>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.jetbrains.dokka</groupId>
+                <artifactId>dokka-maven-plugin</artifactId>
+                <version>${dokka.version}</version>
+                <executions>
+                    <execution>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>dokka</goal>
+                            <goal>javadocJar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+
+                    <!-- See list of possible formats below -->
+                    <outputFormat>html</outputFormat>
+
+                    <!-- Used for linking to JDK, default: 6 -->
+                    <jdkVersion>8</jdkVersion>
+
+                    <!-- Do not output deprecated members, applies globally, can be overridden by packageOptions -->
+                    <skipDeprecated>false</skipDeprecated>
+                    <!-- Emit warnings about not documented members, applies globally, also can be overridden by packageOptions -->
+                    <reportNotDocumented>true</reportNotDocumented>
+                    <!-- Do not create index pages for empty packages -->
+                    <skipEmptyPackages>true</skipEmptyPackages>
+
+                    <sourceLinks>
+                        <link>
+                            <url>https://github.com/junkdog/bitvector-kotlin/blob/master/src/main/kotlin</url>
+                            <url>https://www.javadoc.io/doc/org.ow2.asm/asm/</url>
+                            <url>https://www.javadoc.io/doc/org.ow2.asm/asm-tree/</url>
+                        </link>
+                    </sourceLinks>
+
+                    <!-- Full form list of sourceRoots -->
+                    <sourceRoots>
+                        <root>
+                            <path>src/main/kotlin</path>
+                        </root>
+                    </sourceRoots>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.10.3</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals/> <!-- disable plugin -->
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>
