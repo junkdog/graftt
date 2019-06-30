@@ -45,6 +45,16 @@ class GraftTests {
     }
 
     @Test
+    fun `transplanted must not extend any base class`() {
+        resultOf { classNode<DeclaredFieldBrokenParentTransplant>() } // donor
+            .andThen { donor -> transplant(donor, ::loadClassNode) } // to recipient
+            .onFailure { assertEquals(
+                Msg.TransplantMustNotExtendClass("net.onedaybeard.graftt.DeclaredFieldBrokenParentTransplant"),
+                it) }
+            .onSuccess { fail("appending to ctor not yet impl") }
+    }
+
+    @Test
     fun `mocked fields are ignored during transplant`() {
         val recipient = transplant<MockedFieldTransplant>()
 

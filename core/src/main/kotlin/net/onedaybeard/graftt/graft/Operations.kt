@@ -19,6 +19,9 @@ import org.objectweb.asm.tree.*
  * on [donor].
  */
 fun transplant(donor: ClassNode, recipient: ClassNode): Result<ClassNode, Msg> {
+    if (donor.superName != "java/lang/Object")
+        return Err(Msg.TransplantMustNotExtendClass(donor.qualifiedName))
+
     fun checkRecipientInterface(iface: String) =
         if (iface !in recipient.interfaces)
             Ok(iface)
@@ -32,12 +35,11 @@ fun transplant(donor: ClassNode, recipient: ClassNode): Result<ClassNode, Msg> {
         .let { ctor -> ctor.fieldInsnNodes(PUTFIELD, PUTSTATIC) }
         .map(FieldInsnNode::name)
 
-    fun verifyFieldsNotInitialized(f: FieldNode): Result<FieldNode, Msg> {
-        return if (f.name !in initializedByCtor)
+    fun verifyFieldsNotInitialized(f: FieldNode) =
+        if (f.name !in initializedByCtor)
             Ok(f)
         else
             Err(Msg.FieldDefaultValueNotSupported(donor.qualifiedName, f.name))
-    }
 
     val fusedInterfaces = donor.interfaces
         .toResultOr { Msg.None }
