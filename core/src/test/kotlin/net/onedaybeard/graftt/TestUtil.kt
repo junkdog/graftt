@@ -14,7 +14,7 @@ data class FieldObserver<T>(
 
 
 inline fun <reified T> transplant(): ClassNode {
-    return resultOf { classNode<T>() }                             // donor
+    return resultOf { classNode<T>() }                           // donor
         .andThen { donor -> transplant(donor, ::loadClassNode) } // to recipient
         .onFailure(`(╯°□°）╯︵ ┻━┻`)
         .unwrap()

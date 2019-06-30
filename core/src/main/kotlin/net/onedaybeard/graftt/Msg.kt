@@ -22,6 +22,9 @@ sealed class Msg {
     data class MethodAlreadyExists(val node: MethodNode) : Msg()
     data class WrongFuseSignature(val node: MethodNode) : Msg()
 
+    data class TransplantMustNotExtendParent(val name: String) : Msg()
+    data class FieldDefaultValueNotSupported(val name: String, val field: String) : Msg()
+
     data class WrongTypeT(
         val expected: KClass<*>,
         val actual: KClass<*>) : Msg()

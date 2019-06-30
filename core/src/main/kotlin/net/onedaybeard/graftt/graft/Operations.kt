@@ -2,12 +2,11 @@ package net.onedaybeard.graftt.graft
 
 import com.github.michaelbull.result.*
 import net.onedaybeard.graftt.*
+import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type
 import org.objectweb.asm.commons.MethodRemapper
 import org.objectweb.asm.commons.SimpleRemapper
-import org.objectweb.asm.tree.ClassNode
-import org.objectweb.asm.tree.MethodInsnNode
-import org.objectweb.asm.tree.MethodNode
+import org.objectweb.asm.tree.*
 
 /**
  * Remaps graftable bytecode from [donor] to this [recipient].
@@ -26,6 +25,20 @@ fun transplant(donor: ClassNode, recipient: ClassNode): Result<ClassNode, Msg> {
         else
             Err(Msg.InterfaceAlreadyExists(iface))
 
+    // not yet allowed; need to append these to recipient's ctor,
+    // but this is not yet supported
+    val initializedByCtor = donor.methods
+        .first { it.name == "<init>"  }
+        .let { ctor -> ctor.fieldInsnNodes(PUTFIELD, PUTSTATIC) }
+        .map(FieldInsnNode::name)
+
+    fun verifyFieldsNotInitialized(f: FieldNode): Result<FieldNode, Msg> {
+        return if (f.name !in initializedByCtor)
+            Ok(f)
+        else
+            Err(Msg.FieldDefaultValueNotSupported(donor.qualifiedName, f.name))
+    }
+
     val fusedInterfaces = donor.interfaces
         .toResultOr { Msg.None }
         .mapAll(::checkRecipientInterface)
@@ -40,6 +53,7 @@ fun transplant(donor: ClassNode, recipient: ClassNode): Result<ClassNode, Msg> {
 
     val fusedFields = resultOf(fusedMethods) { donor }
         .map(ClassNode::graftableFields)
+        .mapAll(::verifyFieldsNotInitialized)
         .map { f -> f.map { Transplant.Field(donor.name, it) } }
         .mapAll(recipient::fuse)
 
@@ -109,13 +123,13 @@ fun ClassNode.fuse(transplant: Transplant.Method): Result<ClassNode, Msg> {
 
 /** all methods except mocked, constructor and static initializer */
 fun ClassNode.graftableMethods() = methods
-        .filterNot { it.hasAnnotation(type<Graft.Mock>()) }
-        .filterNot { "<init>" in it.name }
-        .filterNot { "<clinit>" in it.name }
+    .filterNot { it.hasAnnotation(type<Graft.Mock>()) }
+    .filterNot { "<init>" == it.name }
+    .filterNot { "<clinit>" == it.name }
 
 /** all fields except mocked */
 fun ClassNode.graftableFields() = fields
-        .filterNot { it.hasAnnotation(type<Graft.Mock>()) }
+    .filterNot { it.hasAnnotation(type<Graft.Mock>()) }
 
 val ClassNode.isTransplant: Boolean
     get() = readRecipientType(this).get() != null
@@ -149,3 +163,8 @@ private fun graft(name: String, transplant: Transplant.Method): MethodNode {
 
     return mn
 }
+
+private fun MethodNode.fieldInsnNodes(vararg opcodes: Int) = asSequence()
+    .mapNotNull { insn -> insn as? FieldInsnNode }
+    .filter { fin -> fin.opcode in opcodes }
+    .toList()

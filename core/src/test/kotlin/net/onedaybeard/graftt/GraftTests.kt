@@ -28,11 +28,20 @@ class GraftTests {
     fun `declared fields are transplanted to recipient`() {
         val recipient = transplant<DeclaredFieldTransplant>()
 
-        // N.B. field values are only copied over for primitive types
         // TODO: support injecting into initializer
         instantiate(recipient) {
             assertEquals("william null", invokeMethod("yolo")!!)
         }
+    }
+
+    @Test
+    fun `transplanted fields must not be initialized to a value`() {
+        resultOf { classNode<DeclaredFieldBrokenFieldTransplant>() } // donor
+            .andThen { donor -> transplant(donor, ::loadClassNode) } // to recipient
+            .onFailure { assertEquals(
+                Msg.FieldDefaultValueNotSupported("net.onedaybeard.graftt.DeclaredFieldBrokenFieldTransplant", "name"),
+                it) }
+            .onSuccess { fail("appending to ctor not yet impl") }
     }
 
     @Test

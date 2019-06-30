@@ -2,8 +2,7 @@ package net.onedaybeard.graftt;
 
 @Graft.Recipient(DeclaredField.class)
 public class DeclaredFieldTransplant {
-    // N.B. field values are only copied over for primitive types
-    private String suffix = "blake";
+    private String suffix;
 
     @Graft.Fuse
     public String yolo() {
