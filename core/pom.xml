@@ -100,12 +100,6 @@
 
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-reflect</artifactId>
-            <version>${kotlin.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-test-junit</artifactId>
             <version>${kotlin.version}</version>
             <scope>test</scope>
@@ -148,31 +142,26 @@
                 </executions>
                 <configuration>
 
-                    <!-- See list of possible formats below -->
+                    <!-- html, markdown -->
                     <outputFormat>html</outputFormat>
-
-                    <!-- Used for linking to JDK, default: 6 -->
                     <jdkVersion>8</jdkVersion>
-
-                    <!-- Do not output deprecated members, applies globally, can be overridden by packageOptions -->
-                    <skipDeprecated>false</skipDeprecated>
-                    <!-- Emit warnings about not documented members, applies globally, also can be overridden by packageOptions -->
-                    <reportNotDocumented>true</reportNotDocumented>
-                    <!-- Do not create index pages for empty packages -->
                     <skipEmptyPackages>true</skipEmptyPackages>
 
                     <sourceLinks>
                         <link>
-                            <url>https://github.com/junkdog/bitvector-kotlin/blob/master/src/main/kotlin</url>
                             <url>https://www.javadoc.io/doc/org.ow2.asm/asm/</url>
                             <url>https://www.javadoc.io/doc/org.ow2.asm/asm-tree/</url>
                         </link>
+                        <link>
+                            <dir>${project.basedir}/src/main/kotlin</dir>
+                            <url>https://github.com/junkdog/graftt/tree/master/core/src/main/kotlin</url>
+                            <urlSuffix>#L</urlSuffix>
+                        </link>
                     </sourceLinks>
 
-                    <!-- Full form list of sourceRoots -->
                     <sourceRoots>
                         <root>
-                            <path>src/main/kotlin</path>
+                            <path>${project.basedir}/src/main/kotlin</path>
                         </root>
                     </sourceRoots>
                 </configuration>
