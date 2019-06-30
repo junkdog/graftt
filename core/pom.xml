@@ -125,47 +125,59 @@
         </dependency>
     </dependencies>
 
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.jetbrains.dokka</groupId>
+                        <artifactId>dokka-maven-plugin</artifactId>
+                        <version>${dokka.version}</version>
+                        <executions>
+                            <execution>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>dokka</goal>
+                                    <goal>javadocJar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+
+                            <!-- html, markdown -->
+                            <outputFormat>html</outputFormat>
+                            <jdkVersion>8</jdkVersion>
+                            <skipEmptyPackages>true</skipEmptyPackages>
+
+                            <sourceLinks>
+                                <link>
+                                    <url>https://www.javadoc.io/doc/org.ow2.asm/asm/</url>
+                                    <url>https://www.javadoc.io/doc/org.ow2.asm/asm-tree/</url>
+                                </link>
+                                <link>
+                                    <dir>${project.basedir}/src/main/kotlin</dir>
+                                    <url>
+                                        https://github.com/junkdog/graftt/tree/master/core/src/main/kotlin
+                                    </url>
+                                    <urlSuffix>#L</urlSuffix>
+                                </link>
+                            </sourceLinks>
+
+                            <sourceRoots>
+                                <root>
+                                    <path>${project.basedir}/src/main/kotlin</path>
+                                </root>
+                            </sourceRoots>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.jetbrains.dokka</groupId>
-                <artifactId>dokka-maven-plugin</artifactId>
-                <version>${dokka.version}</version>
-                <executions>
-                    <execution>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>dokka</goal>
-                            <goal>javadocJar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-
-                    <!-- html, markdown -->
-                    <outputFormat>html</outputFormat>
-                    <jdkVersion>8</jdkVersion>
-                    <skipEmptyPackages>true</skipEmptyPackages>
-
-                    <sourceLinks>
-                        <link>
-                            <url>https://www.javadoc.io/doc/org.ow2.asm/asm/</url>
-                            <url>https://www.javadoc.io/doc/org.ow2.asm/asm-tree/</url>
-                        </link>
-                        <link>
-                            <dir>${project.basedir}/src/main/kotlin</dir>
-                            <url>https://github.com/junkdog/graftt/tree/master/core/src/main/kotlin</url>
-                            <urlSuffix>#L</urlSuffix>
-                        </link>
-                    </sourceLinks>
-
-                    <sourceRoots>
-                        <root>
-                            <path>${project.basedir}/src/main/kotlin</path>
-                        </root>
-                    </sourceRoots>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
@@ -177,7 +189,7 @@
                     </execution>
                 </executions>
             </plugin>
+
         </plugins>
     </build>
-
 </project>
