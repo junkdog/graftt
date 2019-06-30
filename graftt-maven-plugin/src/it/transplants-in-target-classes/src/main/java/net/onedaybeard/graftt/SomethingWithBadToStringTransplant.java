@@ -4,7 +4,7 @@ package net.onedaybeard.graftt;
 public class SomethingWithBadToStringTransplant {
 
     @Graft.Mock
-    private int magic = 0;
+    private int magic;
 
     @Graft.Fuse
     public final String toString() {
