@@ -105,12 +105,8 @@ class GrafttMojo : AbstractMojo() {
         log.info("-".repeat(LINE_WIDTH))
     }
 
-
     private fun transplant(donor: ClassNode) {
-        resultOf { donor }
-            .andThen(::readRecipientType)
-            .andThen(this::loadClassNode)
-            .andThen { recipient -> transplant(donor, recipient) }
+        transplant(donor, this::loadClassNode)
             .andThen(this::save)
             .onFailure(`(╯°□°）╯︵ ┻━┻`)
     }
@@ -124,14 +120,14 @@ class GrafttMojo : AbstractMojo() {
         cn.toFile().writeBytes(cn.toBytes())
     }
 
-    private fun ClassNode.toFile() = File(classDir, "$name.class").also { f->
+    private fun ClassNode.toFile() = File(classDir, "$name.class").also { f ->
         if (!f.exists()) throw RuntimeException("wrong path: ${f.absolutePath}")
     }
 
     private fun Dependency.toArtifact(): Artifact {
         infix fun Artifact.matching(dependency: Dependency): Boolean {
             return artifactId == dependency.artifactId
-                && groupId == dependency.groupId
+                && groupId    == dependency.groupId
         }
 
         return project.artifacts.find { it matching this }
