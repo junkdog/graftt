@@ -137,7 +137,7 @@ class GraftTests {
     }
 
     @Test
-    fun `fail when transplanting interfaces already on recipient class`() {
+    fun `fail when transplanting interfaces already present on recipient`() {
         resultOf { classNode<AlreadyHaveInterfaceTransplant>() }     // donor
             .andThen { donor -> transplant(donor, ::loadClassNode) } // to recipient
             .onFailure { assertEquals(Msg.InterfaceAlreadyExists::class, it::class) }

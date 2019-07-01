@@ -28,19 +28,6 @@ fun transplant(donor: ClassNode, recipient: ClassNode): Result<ClassNode, Msg> {
         else
             Err(Msg.InterfaceAlreadyExists(iface))
 
-    // not yet allowed; need to append these to recipient's ctor,
-    // but this is not yet supported
-    val initializedByCtor = donor.methods
-        .first { it.name == "<init>"  }
-        .let { ctor -> ctor.fieldInsnNodes(PUTFIELD, PUTSTATIC) }
-        .map(FieldInsnNode::name)
-
-    fun verifyFieldsNotInitialized(f: FieldNode) =
-        if (f.name !in initializedByCtor)
-            Ok(f)
-        else
-            Err(Msg.FieldDefaultValueNotSupported(donor.qualifiedName, f.name))
-
     val fusedInterfaces = donor.interfaces
         .toResultOr { Msg.None }
         .mapAll(::checkRecipientInterface)
@@ -55,7 +42,7 @@ fun transplant(donor: ClassNode, recipient: ClassNode): Result<ClassNode, Msg> {
 
     val fusedFields = resultOf(fusedMethods) { donor }
         .map(ClassNode::graftableFields)
-        .mapAll(::verifyFieldsNotInitialized)
+        .mapAll(verifyFieldsNotInitialized(donor))
         .map { f -> f.map { Transplant.Field(donor.name, it) } }
         .mapAll(recipient::fuse)
 
@@ -166,7 +153,27 @@ private fun graft(name: String, transplant: Transplant.Method): MethodNode {
     return mn
 }
 
+/** valid [opcodes]: [GETSTATIC], [PUTSTATIC], [GETFIELD], [PUTFIELD] */
 private fun MethodNode.fieldInsnNodes(vararg opcodes: Int) = asSequence()
     .mapNotNull { insn -> insn as? FieldInsnNode }
     .filter { fin -> fin.opcode in opcodes }
     .toList()
+
+/** ensure no fields are initialized with a default value in the ctor or static initializer */
+private fun verifyFieldsNotInitialized(
+    donor: ClassNode,
+    method: String = "<init>"
+): (FieldNode) -> Result<FieldNode, Msg> {
+
+    val initializedByCtor = donor.methods
+        .first { it.name == method }
+        .let { ctor -> ctor.fieldInsnNodes(PUTFIELD, PUTSTATIC) }
+        .map(FieldInsnNode::name)
+
+    return { f: FieldNode ->
+        if (f.name !in initializedByCtor)
+            Ok(f)
+        else
+            Err(Msg.FieldDefaultValueNotSupported(donor.qualifiedName, f.name))
+    }
+}
