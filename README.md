@@ -7,8 +7,8 @@ with the recipient class. The entire API consists of 3 annotations.
 Transplants have complete access to the recipient class: Existing methods can be wrapped,
 changed or replaced entirely. Interfaces can be retrofitted and additional fields added.
  
-An agent (`java -javaagent:agent-$VERSION.jar`) applies transplants at load-time.
-Alternatively, `graftt-maven-plugin` finds and applies transplants within `target/classes`.  
+An agent (`java -javaagent`) applies transplants at load-time. Alternatively, 
+`graftt-maven-plugin` finds and applies transplants within `target/classes`.  
 
 The `core` module can be used for building custom tools. It imposes few restrictions on
 usage and revolves around [ASM's](https://asm.ow2.io/) tree API. 
@@ -90,8 +90,6 @@ public class SomeClass {
 }
 ```
 
-More examples/documentation coming soon(?). Until then, refer to the 
-[tests](https://github.com/junkdog/graftt/blob/master/core/src/test/kotlin/net/onedaybeard/graftt/GraftTests.kt)
 
 ## API 
 

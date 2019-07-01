@@ -6,13 +6,9 @@ import static java.lang.annotation.ElementType.*;
 import static java.lang.annotation.RetentionPolicy.CLASS;
 
 /**
- * Extend existing classes by grafting bytecode from {@code Transplant}
+ * Rewrite existing classes by grafting bytecode from {@code Transplant}
  * classes. Transplants are plain java classes; annotations define
  * interactions with the target class.
- *
- * A custom classloader is responsible for applying the transformations
- * at load-time. The classloader is setup either using the java agent or
- * prior to referencing any targeted classes.
  */
 public final class Graft {
     private Graft() {}

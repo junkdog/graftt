@@ -1,7 +1,5 @@
 package net.onedaybeard.graftt;
 
-import org.objectweb.asm.tree.ClassNode;
-
 public interface PromoteVisibilityWhenRetrofittingInterface {
 
     class Foo {
@@ -25,15 +23,4 @@ public interface PromoteVisibilityWhenRetrofittingInterface {
         @Graft.Fuse
         public int y() { return y(); }
     }
-
-@Graft.Recipient(ClassNode.class)
-public class ClassNodeTransplant {
-
-    @Graft.Mock
-    public String name;
-
-    public String toString() {
-        return "ClassNode(" + name + ")";
-    }
-}
 }
