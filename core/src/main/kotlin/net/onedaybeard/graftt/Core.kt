@@ -40,7 +40,7 @@ fun verify(cn: ClassNode, classLoader: ClassLoader? = null): Result<ClassNode, M
 
     return when (val error = sw.toString()) {
         ""   -> Ok(cn)
-        else -> Err(Msg.ClassVerificationError(cn.qualifiedName, error))
+        else -> Err(Msg.ClassVerificationError(cn.name, error))
     }
 }
 

@@ -5,6 +5,7 @@ import net.onedaybeard.graftt.graft.transplant
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
 import kotlin.test.assertEquals
+import kotlin.test.fail
 
 
 data class FieldObserver<T>(
@@ -77,6 +78,14 @@ fun <T> Any.assertFieldValue(name: String, expected: T? = null) {
         .onSuccess { if (expected != null) assertEquals(expected, it) }
 }
 
+fun <V> Result<V, Msg>.assertErr(msg: Msg): Result<V, Msg> {
+    when (this) {
+        is Ok  -> fail("OK($value), expected failure: $msg")
+        is Err -> assertEquals(msg, error)
+    }
+    return this
+}
+
 fun instantiate(cn: ClassNode, f: Any.() -> Unit = {}): Any {
     val instance = ByteClassLoader().loadClass(cn).newInstance()
     f(instance)
@@ -97,3 +106,4 @@ private class ByteClassLoader : ClassLoader() {
         return clazz
     }
 }
+

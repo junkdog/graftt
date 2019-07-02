@@ -1,12 +1,9 @@
 package net.onedaybeard.graftt
 
-import com.github.michaelbull.result.andThen
-import com.github.michaelbull.result.onFailure
-import com.github.michaelbull.result.onSuccess
+import com.github.michaelbull.result.*
 import net.onedaybeard.graftt.graft.transplant
 import org.junit.Test
 import kotlin.test.assertEquals
-import kotlin.test.fail
 
 class GraftTests {
 
@@ -38,20 +35,16 @@ class GraftTests {
     fun `transplanted fields must not be initialized to a value`() {
         resultOf { classNode<DeclaredFieldBrokenFieldTransplant>() } // donor
             .andThen { donor -> transplant(donor, ::loadClassNode) } // to recipient
-            .onFailure { assertEquals(
-                Msg.FieldDefaultValueNotSupported("net.onedaybeard.graftt.DeclaredFieldBrokenFieldTransplant", "name"),
-                it) }
-            .onSuccess { fail("appending to ctor not yet impl") }
+            .assertErr(Msg.FieldDefaultValueNotSupported(
+                "net/onedaybeard/graftt/DeclaredFieldBrokenFieldTransplant", "name"))
     }
 
     @Test
     fun `transplanted must not extend any base class`() {
         resultOf { classNode<DeclaredFieldBrokenParentTransplant>() } // donor
             .andThen { donor -> transplant(donor, ::loadClassNode) } // to recipient
-            .onFailure { assertEquals(
-                Msg.TransplantMustNotExtendClass("net.onedaybeard.graftt.DeclaredFieldBrokenParentTransplant"),
-                it) }
-            .onSuccess { fail("appending to ctor not yet impl") }
+            .assertErr(Msg.TransplantMustNotExtendClass(
+                "net/onedaybeard/graftt/DeclaredFieldBrokenParentTransplant"))
     }
 
     @Test
@@ -113,7 +106,7 @@ class GraftTests {
     }
 
     @Test
-    fun `interfaces from transplant are added to transplant`() {
+    fun `interfaces from transplant are added to recipient`() {
         val recipient = transplant<WantInterfacesTransplant>()
         val p = instantiate(recipient) as Point
         assertEquals(1, p.x())
@@ -140,8 +133,9 @@ class GraftTests {
     fun `fail when transplanting interfaces already present on recipient`() {
         resultOf { classNode<AlreadyHaveInterfaceTransplant>() }     // donor
             .andThen { donor -> transplant(donor, ::loadClassNode) } // to recipient
-            .onFailure { assertEquals(Msg.InterfaceAlreadyExists::class, it::class) }
-            .onSuccess { fail("copying already implemented interfaces to recipient must fail") }
+            .assertErr(Msg.InterfaceAlreadyExists(
+                "net/onedaybeard/graftt/AlreadyHaveInterface",
+                "net/onedaybeard/graftt/Point"))
     }
 
     @Test

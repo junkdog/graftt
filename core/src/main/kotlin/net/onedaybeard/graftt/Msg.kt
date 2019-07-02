@@ -18,7 +18,7 @@ sealed class Msg {
     data class NoSuchKey(val key: String) : Msg()
 
     data class FieldAlreadyExists(val node: FieldNode) : Msg()
-    data class InterfaceAlreadyExists(val name: String) : Msg()
+    data class InterfaceAlreadyExists(val name: String, val iface: String) : Msg()
     data class MethodAlreadyExists(val node: MethodNode) : Msg()
     data class WrongFuseSignature(val node: MethodNode) : Msg()
 

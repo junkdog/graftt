@@ -12,27 +12,27 @@ import org.objectweb.asm.tree.*
  * Remaps graftable bytecode from [donor] to this [recipient].
  *
  * All interfaces, methods and fields are transplanted, except
- * those annotated with [Graft.Mock]. Fields and methods are
- * transplanted with [ClassNode.fuse]
+ * those annotated with [Graft.Mock]. Methods annotated with
+ * [Graft.Fuse] can invoke the original [recipient] method by
+ * invoking itself inside the donor's method body.
  *
  * As the [recipient] is known, [Graft.Recipient] is not required
  * on [donor].
  */
 fun transplant(donor: ClassNode, recipient: ClassNode): Result<ClassNode, Msg> {
     if (donor.superName != "java/lang/Object")
-        return Err(Msg.TransplantMustNotExtendClass(donor.qualifiedName))
+        return Err(Msg.TransplantMustNotExtendClass(donor.name))
 
     fun checkRecipientInterface(iface: String) =
         if (iface !in recipient.interfaces)
             Ok(iface)
         else
-            Err(Msg.InterfaceAlreadyExists(iface))
+            Err(Msg.InterfaceAlreadyExists(recipient.name, iface))
 
     val fusedInterfaces = donor.interfaces
         .toResultOr { Msg.None }
         .mapAll(::checkRecipientInterface)
         .map { recipient.interfaces.addAll(it) }
-        .map { donor }
         .safeRecover { donor }
 
     val fusedMethods = resultOf(fusedInterfaces) { donor }
@@ -174,6 +174,6 @@ private fun verifyFieldsNotInitialized(
         if (f.name !in initializedByCtor)
             Ok(f)
         else
-            Err(Msg.FieldDefaultValueNotSupported(donor.qualifiedName, f.name))
+            Err(Msg.FieldDefaultValueNotSupported(donor.name, f.name))
     }
 }
