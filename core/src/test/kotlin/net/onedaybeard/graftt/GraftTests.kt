@@ -33,16 +33,30 @@ class GraftTests {
 
     @Test
     fun `transplanted fields must not be initialized to a value`() {
-        resultOf { classNode<DeclaredFieldBrokenFieldTransplant>() } // donor
-            .andThen { donor -> transplant(donor, ::loadClassNode) } // to recipient
+        resultOf { classNode<DeclaredFieldBrokenFieldTransplant>() }
+            .andThen { donor -> transplant(donor, ::loadClassNode) }
             .assertErr(Msg.FieldDefaultValueNotSupported(
                 "net/onedaybeard/graftt/DeclaredFieldBrokenFieldTransplant", "name"))
     }
 
     @Test
+    fun `transplanted fields must not be initialized to a value in clinit`() {
+        resultOf { classNode<DeclaredFieldBrokenFieldTransplant2>() }
+            .andThen { donor -> transplant(donor, ::loadClassNode) }
+            .assertErr(Msg.FieldDefaultValueNotSupported(
+                "net/onedaybeard/graftt/DeclaredFieldBrokenFieldTransplant2", "time"))
+    }
+
+    @Test
+    fun `transplanted static fields can be assigned a simple default value`() {
+        val recipient = transplant<DeclaredFieldStaticFieldWithValueTransplant>()
+        assertEquals("blake", instantiate(recipient).toString())
+    }
+
+    @Test
     fun `transplanted must not extend any base class`() {
-        resultOf { classNode<DeclaredFieldBrokenParentTransplant>() } // donor
-            .andThen { donor -> transplant(donor, ::loadClassNode) } // to recipient
+        resultOf { classNode<DeclaredFieldBrokenParentTransplant>() }
+            .andThen { donor -> transplant(donor, ::loadClassNode) }
             .assertErr(Msg.TransplantMustNotExtendClass(
                 "net/onedaybeard/graftt/DeclaredFieldBrokenParentTransplant"))
     }
@@ -131,10 +145,10 @@ class GraftTests {
 
     @Test
     fun `fail when transplanting interfaces already present on recipient`() {
-        resultOf { classNode<AlreadyHaveInterfaceTransplant>() }     // donor
-            .andThen { donor -> transplant(donor, ::loadClassNode) } // to recipient
+        resultOf { classNode<AlreadyHaveInterfaceTransplant>() }
+            .andThen { donor -> transplant(donor, ::loadClassNode) }
             .assertErr(Msg.InterfaceAlreadyExists(
-                "net/onedaybeard/graftt/AlreadyHaveInterface",
+                "net/onedaybeard/graftt/AlreadyHaveInterfaceTransplant",
                 "net/onedaybeard/graftt/Point"))
     }
 
@@ -149,6 +163,31 @@ class GraftTests {
         val recipient = transplant<MockParentFieldImplTransplant>()
         assertEquals(0xba4.toString(), instantiate(recipient).toString())
     }
+
+    @Test
+    fun `fail when transplanting already existing field`() {
+        resultOf { classNode<SingleClassFieldAlreadyExistsTransplant>() }
+            .andThen { donor -> transplant(donor, ::loadClassNode) }
+            .assertErr(Msg.FieldAlreadyExists(
+                "net/onedaybeard/graftt/SingleClassFieldAlreadyExistsTransplant",
+                "yoloCalled"))
+    }
+
+    @Test
+    fun `fail when transplanting already existing method`() {
+        resultOf { classNode<SingleClassMethodAlreadyExistsTransplant>() }
+            .andThen { donor -> transplant(donor, ::loadClassNode) }
+            .assertErr(Msg.MethodAlreadyExists(
+                "net/onedaybeard/graftt/SingleClassMethodAlreadyExistsTransplant",
+                "yolo"))
+    }
+
+    @Test
+    fun `fail when fused method signature is wrong`() {
+        resultOf { classNode<SingleClassWrongFuseTransplant>() }
+            .andThen { donor -> transplant(donor, ::loadClassNode) }
+            .assertErr(Msg.WrongFuseSignature(
+                "net/onedaybeard/graftt/SingleClassWrongFuseTransplant",
+                "yolo"))
+    }
 }
-
-

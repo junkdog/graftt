@@ -17,10 +17,10 @@ sealed class Msg {
     object None : Msg()
     data class NoSuchKey(val key: String) : Msg()
 
-    data class FieldAlreadyExists(val node: FieldNode) : Msg()
+    data class FieldAlreadyExists(val name: String, val field: String) : Msg()
     data class InterfaceAlreadyExists(val name: String, val iface: String) : Msg()
-    data class MethodAlreadyExists(val node: MethodNode) : Msg()
-    data class WrongFuseSignature(val node: MethodNode) : Msg()
+    data class MethodAlreadyExists(val name: String, val method: String) : Msg()
+    data class WrongFuseSignature(val name: String, val method: String) : Msg()
 
     data class TransplantMustNotExtendClass(val name: String) : Msg()
     data class FieldDefaultValueNotSupported(val name: String, val field: String) : Msg()

@@ -27,7 +27,7 @@ fun transplant(donor: ClassNode, recipient: ClassNode): Result<ClassNode, Msg> {
         if (iface !in recipient.interfaces)
             Ok(iface)
         else
-            Err(Msg.InterfaceAlreadyExists(recipient.name, iface))
+            Err(Msg.InterfaceAlreadyExists(donor.name, iface))
 
     val fusedInterfaces = donor.interfaces
         .toResultOr { Msg.None }
@@ -67,8 +67,8 @@ fun transplant(donor: ClassNode,
 
 /** apply [transplant] to this [ClassNode] */
 fun ClassNode.fuse(transplant: Transplant.Field): Result<ClassNode, Msg> {
-    if (methods.any { it.name == transplant.node.name })
-        return Err(Msg.FieldAlreadyExists(transplant.node))
+    if (fields.any { it.name == transplant.node.name })
+        return Err(Msg.FieldAlreadyExists(transplant.donor, transplant.node.name))
 
     graft(transplant)
 
@@ -86,8 +86,8 @@ fun ClassNode.fuse(transplant: Transplant.Method): Result<ClassNode, Msg> {
     val canFuse = original != null
 
     val operation: Result<ClassNode, Msg> = when {
-        !doFuse && canFuse -> Err(Msg.MethodAlreadyExists(t.node))
-        doFuse && !canFuse -> Err(Msg.WrongFuseSignature(t.node))
+        !doFuse && canFuse -> Err(Msg.MethodAlreadyExists(t.donor, t.node.name))
+        doFuse && !canFuse -> Err(Msg.WrongFuseSignature(t.donor, t.node.name))
         doFuse && canFuse  -> {
             val replacesOriginal = t.node.asSequence()
                 .mapNotNull { insn -> insn as? MethodInsnNode }
@@ -113,8 +113,7 @@ fun ClassNode.fuse(transplant: Transplant.Method): Result<ClassNode, Msg> {
 /** all methods except mocked, constructor and static initializer */
 fun ClassNode.graftableMethods() = methods
     .filterNot { it.hasAnnotation(type<Graft.Mock>()) }
-    .filterNot { "<init>" == it.name }
-    .filterNot { "<clinit>" == it.name }
+    .filterNot(ctorOrStaticInit)
 
 /** all fields except mocked */
 fun ClassNode.graftableFields() = fields
@@ -160,14 +159,11 @@ private fun MethodNode.fieldInsnNodes(vararg opcodes: Int) = asSequence()
     .toList()
 
 /** ensure no fields are initialized with a default value in the ctor or static initializer */
-private fun verifyFieldsNotInitialized(
-    donor: ClassNode,
-    method: String = "<init>"
-): (FieldNode) -> Result<FieldNode, Msg> {
+private fun verifyFieldsNotInitialized(donor: ClassNode): (FieldNode) -> Result<FieldNode, Msg> {
 
     val initializedByCtor = donor.methods
-        .first { it.name == method }
-        .let { ctor -> ctor.fieldInsnNodes(PUTFIELD, PUTSTATIC) }
+        .filter(ctorOrStaticInit)
+        .flatMap { ctor -> ctor.fieldInsnNodes(PUTFIELD, PUTSTATIC) }
         .map(FieldInsnNode::name)
 
     return { f: FieldNode ->
@@ -177,3 +173,7 @@ private fun verifyFieldsNotInitialized(
             Err(Msg.FieldDefaultValueNotSupported(donor.name, f.name))
     }
 }
+
+private val ctorOrStaticInit: (MethodNode) -> Boolean =
+    anyOf({ it.name == "<clinit>" },
+          { it.name == "<init>" })
