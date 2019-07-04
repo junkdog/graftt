@@ -89,6 +89,7 @@
                     <localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>
                     <postBuildHookScript>verify</postBuildHookScript>
                     <settingsFile>src/it/settings.xml</settingsFile>
+                    <skipInvocation>${skipTests}</skipInvocation>
                 </configuration>
                 <executions>
                     <execution>

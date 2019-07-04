@@ -93,6 +93,7 @@
                     <postBuildHookScript>verify</postBuildHookScript> <!-- no extension required -->
                     <settingsFile>src/it/settings.xml</settingsFile>
                     <mavenOpts>-ea</mavenOpts>
+                    <skipInvocation>${skipTests}</skipInvocation>
                 </configuration>
                 <executions>
                     <execution>
