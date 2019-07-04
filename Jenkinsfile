@@ -5,11 +5,6 @@ pipeline {
             args '-v /root/.m2:/root/.m2'
         }
     }
-//    agent any
-//    tools {
-//        maven 'apache-maven-3.3.9'
-//        jdk 'jdk8'
-//    }
     options {
         skipStagesAfterUnstable()
     }
