@@ -35,7 +35,10 @@ pipeline {
         }
         stage('Deploy') {
             when {
-                expression { return params.NIGHTLY.toBoolean() }
+                allOf {
+                    branch 'master'
+                    expression { return params.NIGHTLY.toBoolean() }
+                }
             }
             steps {
                 sh 'mvn deploy -DskipTests'
