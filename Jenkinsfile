@@ -8,6 +8,9 @@ pipeline {
     options {
         skipStagesAfterUnstable()
     }
+    parameters {
+        string(name: 'NIGHTLY', defaultValue: 'false', description: 'Deploys -SNAPSHOTS')
+    }
     stages {
         stage ('Initialize') {
             steps {
@@ -23,14 +26,25 @@ pipeline {
             }
         }
         stage('Install') {
+            when {
+                expression { return !params.NIGHTLY.toBoolean() }
+            }
             steps {
                 sh 'mvn install -DskipTests'
             }
-            post {
-                always {
-                    // todo: kotlin-junit reports?
-                    junit '**/target/surefire-reports/*.xml'
-                }
+        }
+        stage('Deploy') {
+            when {
+                expression { return params.NIGHTLY.toBoolean() }
+            }
+            steps {
+                sh 'mvn deploy -DskipTests'
+            }
+        }
+        stage('Report') {
+            steps {
+                junit '**/target/surefire-reports/*.xml'
+                archiveArtifacts allowEmptyArchive: true, artifacts: '*/target/*.jar'
             }
         }
     }
