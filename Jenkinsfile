@@ -8,7 +8,7 @@ pipeline {
     options {
         skipStagesAfterUnstable()
     }
-    trigger {
+    triggers {
         // nightly deploy job
         cron('H H * * *')
     }
@@ -37,7 +37,7 @@ pipeline {
         stage('Deploy') {
             when {
                 allOf {
-                    branch master
+                    branch 'master'
                     triggeredBy "TimerTrigger"
                 }
             }
