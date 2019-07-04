@@ -8,8 +8,9 @@ pipeline {
     options {
         skipStagesAfterUnstable()
     }
-    parameters {
-        string(name: 'NIGHTLY', defaultValue: 'false', description: 'Deploys -SNAPSHOTS')
+    trigger {
+        // nightly deploy job
+        cron('H H * * *')
     }
     stages {
         stage ('Initialize') {
@@ -27,7 +28,7 @@ pipeline {
         }
         stage('Install') {
             when {
-                expression { return !params.NIGHTLY.toBoolean() }
+                not { triggeredBy "TimerTrigger" }
             }
             steps {
                 sh 'mvn install -DskipTests'
@@ -36,8 +37,8 @@ pipeline {
         stage('Deploy') {
             when {
                 allOf {
-                    branch 'master'
-                    expression { return params.NIGHTLY.toBoolean() }
+                    branch master
+                    triggeredBy "TimerTrigger"
                 }
             }
             steps {
