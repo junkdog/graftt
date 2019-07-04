@@ -34,7 +34,7 @@ pipeline {
             post {
                 always {
                     // todo: kotlin-junit reports?
-                    junit 'target/surefire-reports/*.xml'
+                    junit '**/target/surefire-reports/*.xml'
                 }
             }
         }
