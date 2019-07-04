@@ -62,6 +62,7 @@
                 <version>3.0.0-M3</version>
                 <configuration>
                     <argLine>-javaagent:${agent.jar}</argLine>
+                    <useSystemClassLoader>false</useSystemClassLoader>
                 </configuration>
             </plugin>
         </plugins>
