@@ -15,15 +15,22 @@ pipeline {
     stages {
         stage ('Initialize') {
             steps {
-                echo "USER = ${USER}"
-                echo "HOME = ${HOME}"
-                echo "PATH = ${PATH}"
-                echo "M2_HOME = ${M2_HOME}"
+                sh "echo `whoami`"
+                echo "USER = ${env.USER}"
+                echo "HOME = ${env.HOME}"
+                echo "PATH = ${env.PATH}"
+                echo "M2_HOME = ${env.M2_HOME}"
             }
         }
         stage ('Build and Test') {
             steps {
                 sh 'mvn integration-test'
+            }
+            post {
+                always {
+                    junit '**/target/surefire-reports/*.xml'
+                    archiveArtifacts allowEmptyArchive: true, artifacts: '*/target/*.jar'
+                }
             }
         }
         stage('Install') {
@@ -44,16 +51,6 @@ pipeline {
             steps {
                 sh 'mvn deploy -DskipTests'
             }
-        }
-        stage('Report') {
-            steps {
-            }
-        }
-    }
-    post {
-        always {
-            junit '**/target/surefire-reports/*.xml'
-            archiveArtifacts allowEmptyArchive: true, artifacts: '*/target/*.jar'
         }
     }
 }
