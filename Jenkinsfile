@@ -1,8 +1,9 @@
 pipeline {
     agent {
         docker {
-            image 'maven:3.6.1-jdk-8'
-            args '-v /root/.m2:/root/.m2'
+            image 'junkdog/mvn-3-jdk8'
+            // -u root for /root/.m2 to be resolved
+            args '-v /root/.m2:/root/.m2 -u root'
         }
     }
     options {

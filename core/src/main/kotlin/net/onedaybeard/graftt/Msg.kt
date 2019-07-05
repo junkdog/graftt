@@ -1,7 +1,5 @@
 package net.onedaybeard.graftt
 
-import org.objectweb.asm.tree.FieldNode
-import org.objectweb.asm.tree.MethodNode
 import kotlin.reflect.KClass
 
 /** enumerates all possible failure states */
