@@ -15,10 +15,10 @@ pipeline {
     stages {
         stage ('Initialize') {
             steps {
-                sh '''
-                    echo "PATH = ${PATH}"
-                    echo "M2_HOME = ${M2_HOME}"
-                '''
+                echo "USER = ${USER}"
+                echo "HOME = ${HOME}"
+                echo "PATH = ${PATH}"
+                echo "M2_HOME = ${M2_HOME}"
             }
         }
         stage ('Build and Test') {
@@ -38,7 +38,7 @@ pipeline {
             when {
                 allOf {
                     branch 'master'
-                    triggeredBy "TimerTrigger"
+                    triggeredBy 'TimerTrigger'
                 }
             }
             steps {
@@ -47,9 +47,13 @@ pipeline {
         }
         stage('Report') {
             steps {
-                junit '**/target/surefire-reports/*.xml'
-                archiveArtifacts allowEmptyArchive: true, artifacts: '*/target/*.jar'
             }
+        }
+    }
+    post {
+        always {
+            junit '**/target/surefire-reports/*.xml'
+            archiveArtifacts allowEmptyArchive: true, artifacts: '*/target/*.jar'
         }
     }
 }
