@@ -1,9 +1,11 @@
 package net.onedaybeard.graftt
 
 import com.github.michaelbull.result.*
+import net.onedaybeard.graftt.graft.readRecipientType
 import net.onedaybeard.graftt.graft.transplant
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
+import kotlin.reflect.KClass
 import kotlin.test.assertEquals
 import kotlin.test.fail
 
@@ -14,9 +16,9 @@ data class FieldObserver<T>(
     val updated: T?)
 
 
-inline fun <reified T> transplant(): ClassNode {
-    return resultOf { classNode<T>() }                           // donor
-        .andThen { donor -> transplant(donor, ::loadClassNode) } // to recipient
+inline fun <reified T> transplant(lookup: Map<Type, Type> = mapOf()): ClassNode {
+    return resultOf { classNode<T>() }                                   // donor
+        .andThen { donor -> transplant(donor, ::loadClassNode, lookup) } // to recipient
         .onFailure(`(╯°□°）╯︵ ┻━┻`)
         .unwrap()
 }
@@ -86,10 +88,23 @@ fun <V> Result<V, Msg>.assertErr(msg: Msg): Result<V, Msg> {
     return this
 }
 
+fun transplantLookup(vararg transplants: KClass<*>): Map<Type, Type> {
+    return transplants
+        .associateBy(::type) { readRecipientType(classNode(it)).unwrap() }
+}
+
 fun instantiate(cn: ClassNode, f: Any.() -> Unit = {}): Any {
     val instance = ByteClassLoader().loadClass(cn).newInstance()
     f(instance)
     return instance
+}
+
+fun instantiate(vararg cns: ClassNode, f: (List<Any>) -> Unit = {}): List<Any> {
+    val cl = ByteClassLoader()
+    return cns
+        .map(cl::loadClass)
+        .map(Class<out Any>::newInstance)
+        .also(f)
 }
 
 fun loadClassNode(type: Type) = resultOf {

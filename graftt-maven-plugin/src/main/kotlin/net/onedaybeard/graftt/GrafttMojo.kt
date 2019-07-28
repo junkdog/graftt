@@ -50,6 +50,26 @@ class GrafttMojo : AbstractMojo() {
     override fun execute() {
         if (!enable) return
 
+        val transplants = findTransplants()
+
+        val lookup = transplants
+            .map { cn -> cn.type to readRecipientType(cn).unwrap() }
+            .toMap()
+
+        // commence surgery
+        transplants
+            .onEach { cn -> transplant(cn, lookup) }
+            .let(this::logSummary)
+
+        if (!keepTransplants) {
+            classNodes(classDir)
+                .filter(ClassNode::isTransplant)
+                .map { it.toFile() }
+                .forEach { it.delete() }
+        }
+    }
+
+    private fun findTransplants(): List<ClassNode> {
         val transplants = mutableListOf<ClassNode>()
 
         // resolve ClassNodes from plugin's <dependencies>, if any
@@ -65,18 +85,7 @@ class GrafttMojo : AbstractMojo() {
         (paths + classDir)
             .flatMapTo(transplants, ::classNodes)
 
-        // commence surgery
-        transplants
-            .filter(ClassNode::isTransplant)
-            .onEach(this::transplant)
-            .let(this::logSummary)
-
-        if (!keepTransplants) {
-            classNodes(classDir)
-                .filter(ClassNode::isTransplant)
-                .map { it.toFile() }
-                .forEach { it.delete() }
-        }
+        return transplants.filter(ClassNode::isTransplant)
     }
 
     private fun logSummary(donated: List<ClassNode>) {
@@ -105,8 +114,8 @@ class GrafttMojo : AbstractMojo() {
         log.info("-".repeat(LINE_WIDTH))
     }
 
-    private fun transplant(donor: ClassNode) {
-        transplant(donor, this::loadClassNode)
+    private fun transplant(donor: ClassNode, lookup: Map<Type, Type>) {
+        transplant(donor, this::loadClassNode, lookup)
             .andThen(this::save)
             .onFailure(`(╯°□°）╯︵ ┻━┻`)
     }

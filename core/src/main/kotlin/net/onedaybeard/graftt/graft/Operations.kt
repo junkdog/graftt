@@ -19,7 +19,9 @@ import org.objectweb.asm.tree.*
  * As the [recipient] is known, [Graft.Recipient] is not required
  * on [donor].
  */
-fun transplant(donor: ClassNode, recipient: ClassNode): Result<ClassNode, Msg> {
+fun transplant(donor: ClassNode,
+               recipient: ClassNode,
+               lookup: Map<Type, Type>): Result<ClassNode, Msg> {
     if (donor.superName != "java/lang/Object")
         return Err(Msg.TransplantMustNotExtendClass(donor.name))
 
@@ -35,18 +37,18 @@ fun transplant(donor: ClassNode, recipient: ClassNode): Result<ClassNode, Msg> {
         .map { recipient.interfaces.addAll(it) }
         .safeRecover { donor }
 
-    val fusedMethods = resultOf(fusedInterfaces) { donor }
-        .map(ClassNode::graftableMethods)
-        .map { fns -> fns.map { Transplant.Method(donor.name, it) } }
-        .mapAll(recipient::fuse)
-
-    val fusedFields = resultOf(fusedMethods) { donor }
+    val fusedFields = resultOf(fusedInterfaces) { donor }
         .map(ClassNode::graftableFields)
         .mapAll(verifyFieldsNotInitialized(donor))
         .map { f -> f.map { Transplant.Field(donor.name, it) } }
         .mapAll(recipient::fuse)
 
-    return fusedFields
+    val fusedMethods = resultOf(fusedFields) { donor }
+        .map(ClassNode::graftableMethods)
+        .map { fns -> fns.map { Transplant.Method(donor.name, it, lookup) } }
+        .mapAll(recipient::fuse)
+
+    return fusedMethods
         .andThen { verify(recipient) }
 }
 
@@ -55,13 +57,14 @@ fun transplant(donor: ClassNode, recipient: ClassNode): Result<ClassNode, Msg> {
  * points to. The recipient is resolved in [loadClassNode].
  */
 fun transplant(donor: ClassNode,
-               loadClassNode: (Type) -> Result<ClassNode, Msg>
+               loadClassNode: (Type) -> Result<ClassNode, Msg>,
+               resolveMockedFieldType: Map<Type, Type>
 ): Result<ClassNode, Msg> {
 
     return resultOf { donor }
         .andThen(::readRecipientType)
         .andThen(loadClassNode)
-        .andThen { recipient -> transplant(donor, recipient) }
+        .andThen { recipient -> transplant(donor, recipient, resolveMockedFieldType) }
 }
 
 
@@ -77,38 +80,57 @@ fun ClassNode.fuse(transplant: Transplant.Field): Result<ClassNode, Msg> {
 
 /** apply [transplant] to this [ClassNode] */
 fun ClassNode.fuse(transplant: Transplant.Method): Result<ClassNode, Msg> {
+    val t = transplant.copy(node = transplant.node.copy())
+
     val original = methods.find { it.signatureEquals(transplant.node) }
     if (original != null)
         original.name += "\$original"
 
-    val t = transplant.copy(node = transplant.node.copy())
+
     val doFuse = t.node.hasAnnotation(type<Graft.Fuse>())
     val canFuse = original != null
 
     val operation: Result<ClassNode, Msg> = when {
         !doFuse && canFuse -> Err(Msg.MethodAlreadyExists(t.donor, t.node.name))
         doFuse && !canFuse -> Err(Msg.WrongFuseSignature(t.donor, t.node.name))
-        doFuse && canFuse  -> {
+        doFuse && canFuse -> {
             val replacesOriginal = t.node.asSequence()
                 .mapNotNull { insn -> insn as? MethodInsnNode }
-                .filter { insn -> t.node.signatureEquals(insn) }
                 .filter { insn -> insn.owner == t.donor }
+                .filter(t.node::signatureEquals)
                 .onEach { it.name = original!!.name }
                 .count() == 0
 
             if (replacesOriginal)
                 methods.remove(original)
 
+
             Ok(this)
         }
-        else               -> Ok(this)
+        else -> Ok(this)
     }
 
     return operation
+        .andThen { updateMockedTransplantFields(t) }
         .andThen { resultOf { graft(t) } }
         .map { this }
 }
 
+/** if mocked field is a transplant, translate it to recipient type */
+private fun updateMockedTransplantFields(transplant: Transplant.Method) = resultOf {
+    val lookup = transplant.transplantLookup
+
+    transplant.node.asSequence()
+        .mapNotNull { insn -> insn as? FieldInsnNode }
+        .forEach { insn ->
+            lookup[Type.getType("L${insn.owner};")]
+                ?.let { insn.owner = it.internalName }
+            lookup[Type.getType(insn.desc)]
+                ?.let { insn.desc = it.descriptor }
+        }
+
+    Ok(transplant)
+}
 
 /** all methods except mocked, constructor and static initializer */
 fun ClassNode.graftableMethods() = methods

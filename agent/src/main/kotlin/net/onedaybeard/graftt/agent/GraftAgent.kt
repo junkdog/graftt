@@ -5,6 +5,7 @@ import net.onedaybeard.graftt.*
 import net.onedaybeard.graftt.graft.isTransplant
 import net.onedaybeard.graftt.graft.transplant
 import net.onedaybeard.graftt.graft.readRecipientType
+import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
 import java.io.File
 import java.lang.instrument.ClassFileTransformer
@@ -18,6 +19,7 @@ fun premain(agentArgs: String?, inst: Instrumentation) {
         val log = makeLogger()
 
         val transplants: MutableMap<String, ClassNode> = mutableMapOf()
+        val lookup: MutableMap<Type, Type> = mutableMapOf()
 
         init {
             log.info { "graftt agent preparing for surgery..." }
@@ -32,12 +34,19 @@ fun premain(agentArgs: String?, inst: Instrumentation) {
         fun register(root: File) {
             log.info { "searching for transplants: $root" }
 
-            classNodes(root)
+            val transplantNodes = classNodes(root)
                 .filter(ClassNode::isTransplant)
-                .associateByTo(transplants) { cn ->
-                    readRecipientType(cn).unwrap().internalName
-                        .also { log.debug { "found transplant: $it" } }
-                }
+
+            transplantNodes.associateByTo(transplants) { cn ->
+                readRecipientType(cn)
+                    .unwrap()
+                    .internalName
+                    .also { log.debug { "found transplant: $it" } }
+            }
+
+            transplantNodes.associateByTo(lookup, ClassNode::type) { cn ->
+                readRecipientType(cn).unwrap()
+            }
         }
 
         override fun transform(
@@ -54,7 +63,7 @@ fun premain(agentArgs: String?, inst: Instrumentation) {
                 .onSuccess { type -> transplants[type.internalName] = cn }
 
             return transplants[className]?.let { donor ->
-                transplant(donor, classNode(classfileBuffer))
+                transplant(donor, classNode(classfileBuffer), lookup)
                     .map(ClassNode::toBytes)
                     .onFailure(`(╯°□°）╯︵ ┻━┻`)
                     .onSuccess { log.info { "transplant complete: $donor" } }
