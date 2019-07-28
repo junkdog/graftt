@@ -91,6 +91,6 @@ private fun parseArgs(rawArgs: String?): Map<String, List<String>> {
     fun String.token(index: Int) = split(":")[index]
 
     return rawArgs
-        .split(",")
+        .split(";")
         .associate { s -> s.token(0) to s.token(1).split(",")  }
 }
