@@ -58,13 +58,14 @@ fun premain(agentArgs: String?, inst: Instrumentation) {
         ): ByteArray {
             val cn = classNode(classfileBuffer)
 
-            readRecipientType(cn)
-                .onSuccess { log.debug { "classloader touching transplant: ${it.internalName}" } }
-                .onSuccess { type -> transplantToRecipient[cn.type] = type }
-                .onSuccess { type -> transplants[type.internalName] = cn }
+            readRecipientType(cn).onSuccess { type ->
+                log.debug { "classloader touching transplant: ${type.internalName}" }
+                transplantToRecipient[cn.type] = type
+                transplants[type.internalName] = cn
+            }
 
             return transplants[className]?.let { donor ->
-                transplant(donor, classNode(classfileBuffer), transplantToRecipient)
+                transplant(donor, cn, transplantToRecipient)
                     .map(ClassNode::toBytes)
                     .onFailure(`(╯°□°）╯︵ ┻━┻`)
                     .onSuccess { log.info { "transplant complete: $donor" } }
@@ -91,5 +92,5 @@ private fun parseArgs(rawArgs: String?): Map<String, List<String>> {
 
     return rawArgs
         .split(",")
-        .associate { s -> s.token(0) to s.token(1).split(";")  }
+        .associate { s -> s.token(0) to s.token(1).split(",")  }
 }
