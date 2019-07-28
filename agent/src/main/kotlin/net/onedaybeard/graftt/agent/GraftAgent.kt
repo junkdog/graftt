@@ -19,7 +19,7 @@ fun premain(agentArgs: String?, inst: Instrumentation) {
         val log = makeLogger()
 
         val transplants: MutableMap<String, ClassNode> = mutableMapOf()
-        val lookup: MutableMap<Type, Type> = mutableMapOf()
+        val transplantToRecipient: MutableMap<Type, Type> = mutableMapOf()
 
         init {
             log.info { "graftt agent preparing for surgery..." }
@@ -44,7 +44,7 @@ fun premain(agentArgs: String?, inst: Instrumentation) {
                     .also { log.debug { "found transplant: $it" } }
             }
 
-            transplantNodes.associateByTo(lookup, ClassNode::type) { cn ->
+            transplantNodes.associateByTo(transplantToRecipient, ClassNode::type) { cn ->
                 readRecipientType(cn).unwrap()
             }
         }
@@ -60,10 +60,11 @@ fun premain(agentArgs: String?, inst: Instrumentation) {
 
             readRecipientType(cn)
                 .onSuccess { log.debug { "classloader touching transplant: ${it.internalName}" } }
+                .onSuccess { type -> transplantToRecipient[cn.type] = type }
                 .onSuccess { type -> transplants[type.internalName] = cn }
 
             return transplants[className]?.let { donor ->
-                transplant(donor, classNode(classfileBuffer), lookup)
+                transplant(donor, classNode(classfileBuffer), transplantToRecipient)
                     .map(ClassNode::toBytes)
                     .onFailure(`(╯°□°）╯︵ ┻━┻`)
                     .onSuccess { log.info { "transplant complete: $donor" } }
