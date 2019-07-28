@@ -7,6 +7,7 @@ import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
 import kotlin.reflect.KClass
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.fail
 
 
@@ -64,10 +65,11 @@ inline fun <reified T> Any.invokeMethod(name: String,
     return t
 }
 
-fun Any.assertMethodExists(name: String): Boolean {
+fun Any.assertMethodExists(name: String) {
     return this::class.java
         .declaredMethods
-        .find { it.name == name } != null
+        .find { it.name == name }
+        .let { assertNotNull(it, "method not found: $name") }
 }
 
 fun <T> Any.assertFieldValue(name: String, expected: T? = null) {
