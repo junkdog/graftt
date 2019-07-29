@@ -80,40 +80,43 @@ fun ClassNode.fuse(transplant: Transplant.Field): Result<ClassNode, Msg> {
 
 /** apply [transplant] to this [ClassNode] */
 fun ClassNode.fuse(transplant: Transplant.Method): Result<ClassNode, Msg> {
+
+    // transplants aren't re-used once applied, but with regard
+    // regard to the future, better safe than sorry
     val t = transplant.copy(node = transplant.node.copy())
 
+    return prepareTransplant(t)
+        .andThen { updateMockedTransplantFields(t) }
+        .andThen { resultOf { graft(t) } }
+        .map { this }
+}
+
+private fun ClassNode.prepareTransplant(transplant: Transplant.Method): Result<ClassNode, Msg> {
     val original = methods.find { it.signatureEquals(transplant.node) }
     if (original != null)
         original.name += "\$original"
 
-
-    val doFuse = t.node.hasAnnotation(type<Graft.Fuse>())
+    val doFuse = transplant.node.hasAnnotation(type<Graft.Fuse>())
     val canFuse = original != null
 
-    val operation: Result<ClassNode, Msg> = when {
-        !doFuse && canFuse -> Err(Msg.MethodAlreadyExists(t.donor, t.node.name))
-        doFuse && !canFuse -> Err(Msg.WrongFuseSignature(t.donor, t.node.name))
-        doFuse && canFuse -> {
-            val replacesOriginal = t.node.asSequence()
+    return when {
+        !doFuse && canFuse  -> Err(Msg.MethodAlreadyExists(transplant.donor, transplant.node.name))
+        doFuse && !canFuse  -> Err(Msg.WrongFuseSignature(transplant.donor, transplant.node.name))
+        !doFuse && !canFuse -> Ok(this)
+        else -> {
+            val replacesOriginal = transplant.node.asSequence()
                 .mapNotNull { insn -> insn as? MethodInsnNode }
-                .filter { insn -> insn.owner == t.donor }
-                .filter(t.node::signatureEquals)
+                .filter { insn -> insn.owner == transplant.donor }
+                .filter(transplant.node::signatureEquals)
                 .onEach { it.name = original!!.name }
                 .count() == 0
 
             if (replacesOriginal)
                 methods.remove(original)
 
-
             Ok(this)
         }
-        else -> Ok(this)
     }
-
-    return operation
-        .andThen { updateMockedTransplantFields(t) }
-        .andThen { resultOf { graft(t) } }
-        .map { this }
 }
 
 /** if mocked field is a transplant, translate it to recipient type */
