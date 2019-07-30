@@ -32,7 +32,7 @@ val ClassNode.shortName: String
     get() = qualifiedName.substringAfterLast(".")
 
 val ClassNode.type: Type
-    get() = Type.getType("L${name.replace('/', '.')};")
+    get() = Type.getType("L$name;")
 
 fun ClassNode.toBytes(): ByteArray {
     val cw = ClassWriter(0)

@@ -5,7 +5,6 @@ import net.onedaybeard.graftt.*
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type
 import org.objectweb.asm.commons.MethodRemapper
-import org.objectweb.asm.commons.SimpleRemapper
 import org.objectweb.asm.tree.*
 
 /**
@@ -31,6 +30,8 @@ fun transplant(donor: ClassNode,
         else
             Err(Msg.InterfaceAlreadyExists(donor.name, iface))
 
+    val remapper = lookup.toRemapper()
+
     val fusedInterfaces = donor.interfaces
         .toResultOr { Msg.None }
         .mapAll(::checkRecipientInterface)
@@ -40,12 +41,14 @@ fun transplant(donor: ClassNode,
     val fusedFields = resultOf(fusedInterfaces) { donor }
         .map(ClassNode::graftableFields)
         .mapAll(verifyFieldsNotInitialized(donor))
-        .map { f -> f.map { Transplant.Field(donor.name, it) } }
+        .mapAll { f -> Ok(Transplant.Field(donor.name, f)) }
+        .mapAll(recipient::verifyFieldNotPresent)
+        .mapAll { t -> Ok(t.copy(donor = remapper.mapType(donor.name))) }
         .mapAll(recipient::fuse)
 
     val fusedMethods = resultOf(fusedFields) { donor }
         .map(ClassNode::graftableMethods)
-        .map { fns -> fns.map { Transplant.Method(donor.name, it, lookup) } }
+        .mapAll { fn -> Ok(Transplant.Method(donor.name, fn, lookup)) }
         .mapAll(recipient::fuse)
 
     return fusedMethods
@@ -58,23 +61,27 @@ fun transplant(donor: ClassNode,
  */
 fun transplant(donor: ClassNode,
                loadClassNode: (Type) -> Result<ClassNode, Msg>,
-               resolveMockedFieldType: Map<Type, Type>
+               lookup: Map<Type, Type>
 ): Result<ClassNode, Msg> {
 
-    return resultOf { donor }
+    return Ok(donor)
         .andThen(::readRecipientType)
         .andThen(loadClassNode)
-        .andThen { recipient -> transplant(donor, recipient, resolveMockedFieldType) }
+        .andThen { recipient -> transplant(donor, recipient, lookup) }
 }
 
 
+
+fun ClassNode.verifyFieldNotPresent(transplant: Transplant.Field): Result<Transplant.Field, Msg> {
+    return if (fields.any { it.name == transplant.node.name })
+        Err(Msg.FieldAlreadyExists(transplant.donor, transplant.node.name))
+    else
+        Ok(transplant)
+}
+
 /** apply [transplant] to this [ClassNode] */
 fun ClassNode.fuse(transplant: Transplant.Field): Result<ClassNode, Msg> {
-    if (fields.any { it.name == transplant.node.name })
-        return Err(Msg.FieldAlreadyExists(transplant.donor, transplant.node.name))
-
     graft(transplant)
-
     return Ok(this)
 }
 
@@ -82,16 +89,14 @@ fun ClassNode.fuse(transplant: Transplant.Field): Result<ClassNode, Msg> {
 fun ClassNode.fuse(transplant: Transplant.Method): Result<ClassNode, Msg> {
 
     // transplants aren't re-used once applied, but with regard
-    // regard to the future, better safe than sorry
-    val t = transplant.copy(node = transplant.node.copy())
-
-    return prepareTransplant(t)
-        .andThen { updateMockedTransplantFields(t) }
-        .andThen { resultOf { graft(t) } }
-        .map { this }
+    // to the future, better safe than sorry
+    return Ok(transplant.copy(node = transplant.node.copy()))
+        .andThen { substituteTransplants(it) }
+        .andThen { updateAndVerifyMethod(it) }
+        .andThen { graft(it) }
 }
 
-private fun ClassNode.prepareTransplant(transplant: Transplant.Method): Result<ClassNode, Msg> {
+private fun ClassNode.updateAndVerifyMethod(transplant: Transplant.Method): Result<Transplant.Method, Msg> {
     val original = methods.find { it.signatureEquals(transplant.node) }
     if (original != null)
         original.name += "\$original"
@@ -99,14 +104,18 @@ private fun ClassNode.prepareTransplant(transplant: Transplant.Method): Result<C
     val doFuse = transplant.node.hasAnnotation(type<Graft.Fuse>())
     val canFuse = original != null
 
+    val self = transplant
+        .transplantLookup[Type.getType("L${transplant.donor};")]!!
+        .internalName
+
     return when {
         !doFuse && canFuse  -> Err(Msg.MethodAlreadyExists(transplant.donor, transplant.node.name))
         doFuse && !canFuse  -> Err(Msg.WrongFuseSignature(transplant.donor, transplant.node.name))
-        !doFuse && !canFuse -> Ok(this)
+        !doFuse && !canFuse -> Ok(transplant)
         else -> {
             val replacesOriginal = transplant.node.asSequence()
                 .mapNotNull { insn -> insn as? MethodInsnNode }
-                .filter { insn -> insn.owner == transplant.donor }
+                .filter { insn -> insn.owner == self }
                 .filter(transplant.node::signatureEquals)
                 .onEach { it.name = original!!.name }
                 .count() == 0
@@ -114,26 +123,22 @@ private fun ClassNode.prepareTransplant(transplant: Transplant.Method): Result<C
             if (replacesOriginal)
                 methods.remove(original)
 
-            Ok(this)
+            Ok(transplant)
         }
     }
 }
 
-/** if mocked field is a transplant, translate it to recipient type */
-private fun updateMockedTransplantFields(transplant: Transplant.Method) = resultOf {
-    val lookup = transplant.transplantLookup
+private fun substituteTransplants(transplant: Transplant.Method): Result<Transplant.Method, Msg> {
+    val mn = transplant.node.copy(copyInsn = false)
+    val remapper = transplant.transplantLookup.toRemapper()
 
-    transplant.node.asSequence()
-        .mapNotNull { insn -> insn as? FieldInsnNode }
-        .forEach { insn ->
-            lookup[Type.getType("L${insn.owner};")]
-                ?.let { insn.owner = it.internalName }
-            lookup[Type.getType(insn.desc)]
-                ?.let { insn.desc = it.descriptor }
-        }
+    mn.signature = remapper.mapSignature(mn.signature, false)
+    mn.desc = remapper.mapDesc(mn.desc)
+    transplant.node.accept(MethodRemapper(mn, remapper))
 
-    Ok(transplant)
+    return Ok(transplant.copy(node = mn))
 }
+
 
 /** all methods except mocked, constructor and static initializer */
 fun ClassNode.graftableMethods() = methods
@@ -158,23 +163,15 @@ fun readRecipientType(donor: ClassNode): Result<Type, Msg> {
 
 
 /** rewrites this [ClassNode] according to [method] transplant */
-private fun ClassNode.graft(method: Transplant.Method) {
-    methods.add(graft(name, method))
+private fun ClassNode.graft(method: Transplant.Method): Result<ClassNode, Msg> {
+    methods.add(method.node)
+    return Ok(this)
 }
 
 /** rewrites this [ClassNode] according to [field] transplant */
-private fun ClassNode.graft(field: Transplant.Field) {
+private fun ClassNode.graft(field: Transplant.Field): Result<ClassNode, Msg> {
     fields.add(field.node.copy())
-}
-
-private fun graft(name: String, transplant: Transplant.Method): MethodNode {
-    val original = transplant.node
-    val mn = original.copy(copyInsn = false)
-
-    val remapper = SimpleRemapper(transplant.donor, name)
-    original.accept(MethodRemapper(mn, remapper))
-
-    return mn
+    return Ok(this)
 }
 
 /** valid [opcodes]: [GETSTATIC], [PUTSTATIC], [GETFIELD], [PUTFIELD] */

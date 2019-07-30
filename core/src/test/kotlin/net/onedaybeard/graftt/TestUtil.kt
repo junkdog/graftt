@@ -17,11 +17,20 @@ data class FieldObserver<T>(
     val updated: T?)
 
 
-inline fun <reified T> transplant(lookup: Map<Type, Type> = mapOf()): ClassNode {
-    return resultOf { classNode<T>() }                                   // donor
-        .andThen { donor -> transplant(donor, ::loadClassNode, lookup) } // to recipient
-        .onFailure(`(╯°□°）╯︵ ┻━┻`)
-        .unwrap()
+inline fun <reified T> transplant(): Result<ClassNode, Msg> {
+    return transplant(T::class)
+}
+
+
+fun transplant(type: KClass<*>, lookup: Map<Type, Type>? = null): Result<ClassNode, Msg> {
+    return transplant(classNode(type), lookup)
+}
+
+fun transplant(donor: ClassNode, lookup: Map<Type, Type>? = null): Result<ClassNode, Msg> {
+
+    val l = lookup ?: mapOf(donor.type to readRecipientType(donor).unwrap())
+    return resultOf { donor }                                       // donor
+        .andThen { donor -> transplant(donor, ::loadClassNode, l) } // to recipient
 }
 
 
@@ -90,6 +99,11 @@ fun <V> Result<V, Msg>.assertErr(msg: Msg): Result<V, Msg> {
     return this
 }
 
+fun transplantsOf(vararg types: KClass<*>): List<ClassNode> {
+    val lookup = transplantLookup(*types)
+    return types.map { transplant(it, lookup).unwrap() }
+}
+
 fun transplantLookup(vararg transplants: KClass<*>): Map<Type, Type> {
     return transplants
         .associateBy(::type) { readRecipientType(classNode(it)).unwrap() }
@@ -99,6 +113,9 @@ fun instantiate(cn: ClassNode, f: Any.() -> Unit = {}): Any {
     val instance = ByteClassLoader().loadClass(cn).newInstance()
     f(instance)
     return instance
+}
+fun instantiate(cn: Result<ClassNode, Msg>, f: Any.() -> Unit = {}): Any {
+    return instantiate(cn.unwrap(), f)
 }
 
 fun instantiate(vararg cns: ClassNode, f: (List<Any>) -> Unit = {}): List<Any> {
