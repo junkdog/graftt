@@ -14,7 +14,6 @@ class GraftTests {
             TransplantSubstitution.FooTransplant::class)
 
         instantiate(bar, foo) { (bar, foo) ->
-            // allocate bar1, bar2
             foo.invokeMethod<Unit>("init")
             foo.invokeMethod<Unit>("checkBars")
         }

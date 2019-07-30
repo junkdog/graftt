@@ -73,17 +73,14 @@ fun transplant(donor: ClassNode,
 
 
 fun ClassNode.verifyFieldNotPresent(transplant: Transplant.Field): Result<Transplant.Field, Msg> {
-    return if (fields.any { it.name == transplant.node.name })
-        Err(Msg.FieldAlreadyExists(transplant.donor, transplant.node.name))
-    else
+    return if (fields.none { it.name == transplant.node.name })
         Ok(transplant)
+    else
+        Err(Msg.FieldAlreadyExists(transplant.donor, transplant.node.name))
 }
 
 /** apply [transplant] to this [ClassNode] */
-fun ClassNode.fuse(transplant: Transplant.Field): Result<ClassNode, Msg> {
-    graft(transplant)
-    return Ok(this)
-}
+fun ClassNode.fuse(transplant: Transplant.Field) = graft(transplant)
 
 /** apply [transplant] to this [ClassNode] */
 fun ClassNode.fuse(transplant: Transplant.Method): Result<ClassNode, Msg> {
@@ -91,9 +88,9 @@ fun ClassNode.fuse(transplant: Transplant.Method): Result<ClassNode, Msg> {
     // transplants aren't re-used once applied, but with regard
     // to the future, better safe than sorry
     return Ok(transplant.copy(node = transplant.node.copy()))
-        .andThen { substituteTransplants(it) }
-        .andThen { updateAndVerifyMethod(it) }
-        .andThen { graft(it) }
+        .andThen(::substituteTransplants)
+        .andThen(this::updateAndVerifyMethod)
+        .andThen(this::graft)
 }
 
 private fun ClassNode.updateAndVerifyMethod(transplant: Transplant.Method): Result<Transplant.Method, Msg> {
@@ -104,15 +101,15 @@ private fun ClassNode.updateAndVerifyMethod(transplant: Transplant.Method): Resu
     val doFuse = transplant.node.hasAnnotation(type<Graft.Fuse>())
     val canFuse = original != null
 
-    val self = transplant
-        .transplantLookup[Type.getType("L${transplant.donor};")]!!
-        .internalName
-
     return when {
         !doFuse && canFuse  -> Err(Msg.MethodAlreadyExists(transplant.donor, transplant.node.name))
         doFuse && !canFuse  -> Err(Msg.WrongFuseSignature(transplant.donor, transplant.node.name))
         !doFuse && !canFuse -> Ok(transplant)
         else -> {
+            val self = transplant
+                .transplantLookup[Type.getType("L${transplant.donor};")]!!
+                .internalName
+
             val replacesOriginal = transplant.node.asSequence()
                 .mapNotNull { insn -> insn as? MethodInsnNode }
                 .filter { insn -> insn.owner == self }
