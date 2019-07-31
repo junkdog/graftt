@@ -17,6 +17,8 @@ import java.io.File
 import java.lang.Integer.max
 import java.lang.RuntimeException
 import org.apache.maven.project.MavenProject
+import org.objectweb.asm.commons.Remapper
+import org.objectweb.asm.commons.SimpleRemapper
 import java.io.FileNotFoundException
 
 
@@ -52,13 +54,14 @@ class GrafttMojo : AbstractMojo() {
 
         val transplants = findTransplants()
 
-        val lookup = transplants
-            .map { cn -> cn.type to readRecipientType(cn).unwrap() }
+        val remapper = transplants
+            .map { cn -> cn.name to readRecipientType(cn).map { it.internalName }.unwrap() }
             .toMap()
+            .let(::SimpleRemapper)
 
         // commence surgery
         transplants
-            .onEach { cn -> transplant(cn, lookup) }
+            .onEach { cn -> transplant(cn, remapper) }
             .let(this::logSummary)
 
         if (!keepTransplants) {
@@ -114,8 +117,8 @@ class GrafttMojo : AbstractMojo() {
         log.info("-".repeat(LINE_WIDTH))
     }
 
-    private fun transplant(donor: ClassNode, lookup: Map<Type, Type>) {
-        transplant(donor, this::loadClassNode, lookup)
+    private fun transplant(donor: ClassNode, remapper: Remapper) {
+        transplant(donor, this::loadClassNode, remapper)
             .andThen(this::save)
             .onFailure(`(╯°□°）╯︵ ┻━┻`)
     }

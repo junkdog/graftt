@@ -4,6 +4,8 @@ import com.github.michaelbull.result.*
 import net.onedaybeard.graftt.graft.readRecipientType
 import net.onedaybeard.graftt.graft.transplant
 import org.objectweb.asm.Type
+import org.objectweb.asm.commons.Remapper
+import org.objectweb.asm.commons.SimpleRemapper
 import org.objectweb.asm.tree.ClassNode
 import kotlin.reflect.KClass
 import kotlin.test.assertEquals
@@ -22,15 +24,17 @@ inline fun <reified T> transplant(): Result<ClassNode, Msg> {
 }
 
 
-fun transplant(type: KClass<*>, lookup: Map<Type, Type>? = null): Result<ClassNode, Msg> {
-    return transplant(classNode(type), lookup)
+fun transplant(type: KClass<*>, remapper: Remapper? = null): Result<ClassNode, Msg> {
+    return transplant(classNode(type), remapper)
 }
 
-fun transplant(donor: ClassNode, lookup: Map<Type, Type>? = null): Result<ClassNode, Msg> {
+fun transplant(donor: ClassNode, remapper: Remapper? = null): Result<ClassNode, Msg> {
 
-    val l = lookup ?: mapOf(donor.type to readRecipientType(donor).unwrap())
-    return resultOf { donor }                                       // donor
-        .andThen { donor -> transplant(donor, ::loadClassNode, l) } // to recipient
+    val remapping = remapper
+        ?: SimpleRemapper(donor.name, readRecipientType(donor).unwrap().internalName)
+
+    return Ok(donor)
+        .andThen { donor -> transplant(donor, ::loadClassNode, remapping) }
 }
 
 
@@ -100,13 +104,14 @@ fun <V> Result<V, Msg>.assertErr(msg: Msg): Result<V, Msg> {
 }
 
 fun transplantsOf(vararg types: KClass<*>): List<ClassNode> {
-    val lookup = transplantLookup(*types)
-    return types.map { transplant(it, lookup).unwrap() }
+    val remapper = transplantRemapper(*types)
+    return types.map { transplant(it, remapper).unwrap() }
 }
 
-fun transplantLookup(vararg transplants: KClass<*>): Map<Type, Type> {
+fun transplantRemapper(vararg transplants: KClass<*>): Remapper {
     return transplants
-        .associateBy(::type) { readRecipientType(classNode(it)).unwrap() }
+        .associateBy(KClass<*>::internalName) { readRecipientType(classNode(it)).unwrap().internalName }
+        .let(::SimpleRemapper)
 }
 
 fun instantiate(cn: ClassNode, f: Any.() -> Unit = {}): Any {

@@ -1,6 +1,7 @@
 package net.onedaybeard.graftt.graft
 
 import org.objectweb.asm.Type
+import org.objectweb.asm.commons.Remapper
 import org.objectweb.asm.commons.SimpleRemapper
 import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.MethodNode
@@ -14,7 +15,7 @@ sealed class Transplant {
     data class Method(
         val donor: String,
         val node: MethodNode,
-        val transplantLookup: Map<Type, Type>
+        val transplantLookup: Remapper
     ) : Transplant()
 }
 

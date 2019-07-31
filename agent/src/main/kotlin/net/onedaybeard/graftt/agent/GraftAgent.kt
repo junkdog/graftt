@@ -5,7 +5,7 @@ import net.onedaybeard.graftt.*
 import net.onedaybeard.graftt.graft.isTransplant
 import net.onedaybeard.graftt.graft.transplant
 import net.onedaybeard.graftt.graft.readRecipientType
-import org.objectweb.asm.Type
+import org.objectweb.asm.commons.SimpleRemapper
 import org.objectweb.asm.tree.ClassNode
 import java.io.File
 import java.lang.instrument.ClassFileTransformer
@@ -19,7 +19,7 @@ fun premain(agentArgs: String?, inst: Instrumentation) {
         val log = makeLogger()
 
         val transplants: MutableMap<String, ClassNode> = mutableMapOf()
-        val transplantToRecipient: MutableMap<Type, Type> = mutableMapOf()
+        val mapping: MutableMap<String, String> = mutableMapOf()
 
         init {
             log.info { "graftt agent preparing for surgery..." }
@@ -44,8 +44,8 @@ fun premain(agentArgs: String?, inst: Instrumentation) {
                     .also { log.debug { "found transplant: $it" } }
             }
 
-            transplantNodes.associateByTo(transplantToRecipient, ClassNode::type) { cn ->
-                readRecipientType(cn).unwrap()
+            transplantNodes.associateByTo(mapping, ClassNode::name) { cn ->
+                readRecipientType(cn).unwrap().internalName
             }
         }
 
@@ -58,14 +58,14 @@ fun premain(agentArgs: String?, inst: Instrumentation) {
         ): ByteArray {
             val cn = classNode(classfileBuffer)
 
-            readRecipientType(cn).onSuccess { type ->
-                log.debug { "classloader touching transplant: ${type.internalName}" }
-                transplantToRecipient[cn.type] = type
-                transplants[type.internalName] = cn
+            readRecipientType(cn).map { it.internalName }.onSuccess { name ->
+                log.debug { "classloader touching transplant: $name" }
+                mapping[cn.name] = name
+                transplants[name] = cn
             }
 
             return transplants[className]?.let { donor ->
-                transplant(donor, cn, transplantToRecipient)
+                transplant(donor, cn, SimpleRemapper(mapping))
                     .map(ClassNode::toBytes)
                     .onFailure(`(╯°□°）╯︵ ┻━┻`)
                     .onSuccess { log.info { "transplant complete: $donor" } }

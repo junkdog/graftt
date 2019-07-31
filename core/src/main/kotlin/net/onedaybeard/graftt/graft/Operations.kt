@@ -5,6 +5,7 @@ import net.onedaybeard.graftt.*
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type
 import org.objectweb.asm.commons.MethodRemapper
+import org.objectweb.asm.commons.Remapper
 import org.objectweb.asm.tree.*
 
 /**
@@ -20,7 +21,7 @@ import org.objectweb.asm.tree.*
  */
 fun transplant(donor: ClassNode,
                recipient: ClassNode,
-               lookup: Map<Type, Type>): Result<ClassNode, Msg> {
+               remapper: Remapper): Result<ClassNode, Msg> {
     if (donor.superName != "java/lang/Object")
         return Err(Msg.TransplantMustNotExtendClass(donor.name))
 
@@ -30,12 +31,10 @@ fun transplant(donor: ClassNode,
         else
             Err(Msg.InterfaceAlreadyExists(donor.name, iface))
 
-    val remapper = lookup.toRemapper()
-
     val fusedInterfaces = donor.interfaces
         .toResultOr { Msg.None }
         .mapAll(::checkRecipientInterface)
-        .map { recipient.interfaces.addAll(it) }
+        .map(recipient.interfaces::addAll)
         .safeRecover { donor }
 
     val fusedFields = resultOf(fusedInterfaces) { donor }
@@ -48,7 +47,7 @@ fun transplant(donor: ClassNode,
 
     val fusedMethods = resultOf(fusedFields) { donor }
         .map(ClassNode::graftableMethods)
-        .mapAll { fn -> Ok(Transplant.Method(donor.name, fn, lookup)) }
+        .mapAll { fn -> Ok(Transplant.Method(donor.name, fn, remapper)) }
         .mapAll(recipient::fuse)
 
     return fusedMethods
@@ -61,13 +60,13 @@ fun transplant(donor: ClassNode,
  */
 fun transplant(donor: ClassNode,
                loadClassNode: (Type) -> Result<ClassNode, Msg>,
-               lookup: Map<Type, Type>
+               remapper: Remapper
 ): Result<ClassNode, Msg> {
 
     return Ok(donor)
         .andThen(::readRecipientType)
         .andThen(loadClassNode)
-        .andThen { recipient -> transplant(donor, recipient, lookup) }
+        .andThen { recipient -> transplant(donor, recipient, remapper) }
 }
 
 
@@ -101,14 +100,13 @@ private fun ClassNode.updateAndVerifyMethod(transplant: Transplant.Method): Resu
     val doFuse = transplant.node.hasAnnotation(type<Graft.Fuse>())
     val canFuse = original != null
 
+    val donor = transplant.donor
     return when {
-        !doFuse && canFuse  -> Err(Msg.MethodAlreadyExists(transplant.donor, transplant.node.name))
-        doFuse && !canFuse  -> Err(Msg.WrongFuseSignature(transplant.donor, transplant.node.name))
+        !doFuse && canFuse  -> Err(Msg.MethodAlreadyExists(donor, transplant.node.name))
+        doFuse && !canFuse  -> Err(Msg.WrongFuseSignature(donor, transplant.node.name))
         !doFuse && !canFuse -> Ok(transplant)
         else -> {
-            val self = transplant
-                .transplantLookup[Type.getType("L${transplant.donor};")]!!
-                .internalName
+            val self = transplant.transplantLookup.mapType(donor)
 
             val replacesOriginal = transplant.node.asSequence()
                 .mapNotNull { insn -> insn as? MethodInsnNode }
@@ -127,7 +125,7 @@ private fun ClassNode.updateAndVerifyMethod(transplant: Transplant.Method): Resu
 
 private fun substituteTransplants(transplant: Transplant.Method): Result<Transplant.Method, Msg> {
     val mn = transplant.node.copy(copyInsn = false)
-    val remapper = transplant.transplantLookup.toRemapper()
+    val remapper = transplant.transplantLookup
 
     mn.signature = remapper.mapSignature(mn.signature, false)
     mn.desc = remapper.mapDesc(mn.desc)
