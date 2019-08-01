@@ -37,16 +37,18 @@ fun premain(agentArgs: String?, inst: Instrumentation) {
             val transplantNodes = classNodes(root)
                 .filter(ClassNode::isTransplant)
 
-            transplantNodes.associateByTo(transplants) { cn ->
-                readRecipientType(cn)
+            fun recipientName(cn: ClassNode): String {
+                return readRecipientType(cn)
                     .unwrap()
                     .internalName
-                    .also { log.debug { "found transplant: $it" } }
             }
 
-            transplantNodes.associateByTo(mapping, ClassNode::name) { cn ->
-                readRecipientType(cn).unwrap().internalName
+            transplantNodes.associateByTo(transplants) { cn ->
+                recipientName(cn)
+                    .also { log.debug { "found transplant: ${cn.name} -> $it" } }
             }
+
+            transplantNodes.associateByTo(mapping, ClassNode::name, ::recipientName)
         }
 
         override fun transform(
@@ -67,13 +69,15 @@ fun premain(agentArgs: String?, inst: Instrumentation) {
             return transplants[className]?.let { donor ->
                 transplant(donor, cn, SimpleRemapper(mapping))
                     .map(ClassNode::toBytes)
-                    .onFailure(`(╯°□°）╯︵ ┻━┻`)
-                    .onSuccess { log.info { "transplant complete: $donor" } }
-                    .unwrap()
+                    .mapError(Msg::toException)
+                    .onFailure { log.error(it) { "unable to transplant to $className" } }
+                    .onSuccess { log.info { "transplant complete: ${donor.name}" } }
+                    .fold(success = { it }, failure = { null })
             } ?: classfileBuffer
         }
     })
 }
+
 
 private fun validate(args: Map<String, List<String>>) {
     if (args.isEmpty()) return

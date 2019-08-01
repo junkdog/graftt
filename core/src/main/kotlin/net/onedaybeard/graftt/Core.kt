@@ -33,6 +33,7 @@ fun ClassNode.toDebugString(): String {
     return sw.toString()
 }
 
+/** cannot be used with agent due to verification using SimpleVerifier, loading referenced classes */
 fun verify(cn: ClassNode, classLoader: ClassLoader? = null): Result<ClassNode, Msg> {
     val sw = StringWriter()
     val cr = ClassReader(cn.toBytes())
