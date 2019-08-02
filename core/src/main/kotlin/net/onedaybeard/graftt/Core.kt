@@ -5,6 +5,9 @@ import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.analysis.Analyzer
+import org.objectweb.asm.tree.analysis.AnalyzerException
+import org.objectweb.asm.tree.analysis.BasicVerifier
 import org.objectweb.asm.util.CheckClassAdapter
 import org.objectweb.asm.util.TraceClassVisitor
 import java.io.File
@@ -33,15 +36,26 @@ fun ClassNode.toDebugString(): String {
     return sw.toString()
 }
 
-/** cannot be used with agent due to verification using SimpleVerifier, loading referenced classes */
-fun verify(cn: ClassNode, classLoader: ClassLoader? = null): Result<ClassNode, Msg> {
-    val sw = StringWriter()
-    val cr = ClassReader(cn.toBytes())
-    CheckClassAdapter.verify(cr, classLoader, false, PrintWriter(sw))
+fun verify(source: ClassNode): Result<ClassNode, Msg> {
+    val cn = ClassNode()
+    CheckClassAdapter(cn, true)
+        .also(source::accept)
 
-    return when (val error = sw.toString()) {
-        ""   -> Ok(cn)
-        else -> Err(Msg.ClassVerificationError(cn.name, error))
+    val sw = StringWriter()
+    val pw = PrintWriter(sw)
+    for (mn in cn.methods) {
+        try {
+            Analyzer(BasicVerifier()).analyze(cn.name, mn)
+        } catch (e: AnalyzerException) {
+            e.printStackTrace(pw)
+        }
+
+    }
+    pw.flush()
+
+    return when (val err = sw.toString()) {
+        ""   -> Ok(source)
+        else -> Err(Msg.ClassVerificationError(source.name, err))
     }
 }
 

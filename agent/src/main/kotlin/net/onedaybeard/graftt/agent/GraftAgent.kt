@@ -70,8 +70,8 @@ fun premain(agentArgs: String?, inst: Instrumentation) {
                 transplant(donor, cn, SimpleRemapper(mapping))
                     .map(ClassNode::toBytes)
                     .mapError(Msg::toException)
-                    .onFailure { log.error(it) { "unable to transplant to $className" } }
-                    .onSuccess { log.info { "transplant complete: ${donor.name}" } }
+                    .onFailure { log.error(it) { "failed transplant: ${donor.name} -> $className" } }
+                    .onSuccess { log.info { "transplant complete: ${donor.name} -> $className" } }
                     .fold(success = { it }, failure = { null })
             } ?: classfileBuffer
         }

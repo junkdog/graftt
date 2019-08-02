@@ -50,8 +50,8 @@ fun transplant(donor: ClassNode,
         .mapAll { fn -> Ok(Transplant.Method(donor.name, fn, remapper)) }
         .mapAll(recipient::fuse)
 
-    return fusedMethods.map { recipient }
-//        .andThen { verify(recipient) }
+    return resultOf(fusedMethods) { recipient }
+        .andThen(::verify)
 }
 
 /**
