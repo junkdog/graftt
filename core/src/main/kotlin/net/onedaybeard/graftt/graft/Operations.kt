@@ -16,12 +16,16 @@ import org.objectweb.asm.tree.*
  * [Graft.Fuse] can invoke the original [recipient] method by
  * invoking itself inside the donor's method body.
  *
+ * Transplants other than [donor] can be referenced. All referenced
+ * transplants are substituted with their recipient types.
+ *
  * As the [recipient] is known, [Graft.Recipient] is not required
  * on [donor].
  */
 fun transplant(donor: ClassNode,
                recipient: ClassNode,
                remapper: Remapper): Result<ClassNode, Msg> {
+
     if (donor.superName != "java/lang/Object")
         return Err(Msg.TransplantMustNotExtendClass(donor.name))
 
@@ -93,25 +97,26 @@ fun ClassNode.fuse(transplant: Transplant.Method): Result<ClassNode, Msg> {
 }
 
 private fun ClassNode.updateAndVerifyMethod(transplant: Transplant.Method): Result<Transplant.Method, Msg> {
-    val original = methods.find { it.signatureEquals(transplant.node) }
+    val method = transplant.node
+    val original = methods.find { it.signatureEquals(method) }
     if (original != null)
         original.name += "\$original"
 
-    val doFuse = transplant.node.hasAnnotation(type<Graft.Fuse>())
+    val doFuse = method.hasAnnotation(type<Graft.Fuse>())
     val canFuse = original != null
 
     val donor = transplant.donor
     return when {
-        !doFuse && canFuse  -> Err(Msg.MethodAlreadyExists(donor, transplant.node.name))
-        doFuse && !canFuse  -> Err(Msg.WrongFuseSignature(donor, transplant.node.name))
+        !doFuse && canFuse  -> Err(Msg.MethodAlreadyExists(donor, method.name))
+        doFuse && !canFuse  -> Err(Msg.WrongFuseSignature(donor, method.name))
         !doFuse && !canFuse -> Ok(transplant)
         else -> {
             val self = transplant.transplantLookup.mapType(donor)
 
-            val replacesOriginal = transplant.node.asSequence()
+            val replacesOriginal = method.asSequence()
                 .mapNotNull { insn -> insn as? MethodInsnNode }
                 .filter { insn -> insn.owner == self }
-                .filter(transplant.node::signatureEquals)
+                .filter(method::signatureEquals)
                 .onEach { it.name = original!!.name }
                 .count() == 0
 
