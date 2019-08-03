@@ -15,6 +15,8 @@ sealed class Msg {
     object None : Msg()
     data class NoSuchKey(val key: String) : Msg()
 
+    data class AnnotationAlreadyExists(val name: String, val symbol: String, val anno: String)
+
     data class FieldAlreadyExists(val name: String, val field: String) : Msg()
     data class InterfaceAlreadyExists(val name: String, val iface: String) : Msg()
     data class MethodAlreadyExists(val name: String, val method: String) : Msg()

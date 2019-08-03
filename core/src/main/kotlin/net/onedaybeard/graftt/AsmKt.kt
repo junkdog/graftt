@@ -95,7 +95,6 @@ fun MethodNode.hasAnnotation(type: Type) =
 fun FieldNode.hasAnnotation(type: Type) =
     type in visibleAnnotations || type in invisibleAnnotations
 
-
 fun List<AnnotationNode>.findAnnotation(desc: String) =
     find { it.desc == desc }.toResultOr { Msg.None }
 

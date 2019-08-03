@@ -16,7 +16,7 @@ public final class Graft {
     /** Specifies the receiver of the transplant */
     @Documented
     @Retention(CLASS)
-    @java.lang.annotation.Target(TYPE)
+    @Target(TYPE)
     public @interface Recipient { Class<?> value(); }
 
     /**
@@ -26,16 +26,20 @@ public final class Graft {
      */
     @Documented
     @Retention(CLASS)
-    @java.lang.annotation.Target({FIELD, METHOD})
+    @Target({FIELD, METHOD})
     public @interface Mock {}
 
     /**
      * Transplant the compiled bytecode over to the recipient class,
      * translating any references so that they point to the target
      * class once transplanted.
+     *
+     * Unwanted annotations can be declared in {@code Fuse.remove}.
+     * To replace an annotation, it must first be removed or
+     * face an {@code AnnotationAlreadyExists} error.
      */
     @Documented
     @Retention(CLASS)
-    @java.lang.annotation.Target(METHOD)
-    public @interface Fuse {}
+    @Target(METHOD)
+    public @interface Fuse { Class<? extends Annotation>[] remove() default {}; }
 }

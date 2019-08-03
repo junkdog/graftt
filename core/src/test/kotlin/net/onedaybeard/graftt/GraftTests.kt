@@ -3,9 +3,38 @@ package net.onedaybeard.graftt
 import com.github.michaelbull.result.*
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 
 class GraftTests {
+
+
+    @Test
+    fun `annotations from original method are retained on transplanted`() {
+        val mn = transplant<AnnotationFusing.BarTransplant>()
+            .map { cn -> cn.methods.first { it.name == "hmm" } }
+            .unwrap()
+
+        assertTrue(mn.hasAnnotation(type<AnnotationFusing.MyAnno>()))
+        assertTrue(mn.hasAnnotation(type<AnnotationFusing.MyAnnoRt>()))
+        assertFalse(mn.hasAnnotation(type<Graft.Fuse>()))
+    }
+
+    @Test
+    fun `fuse annotations on method`() {
+        TODO()
+    }
+
+    @Test
+    fun `fuse annotations on field`() {
+        TODO()
+    }
+
+    @Test
+    fun `detect annotation clash`() {
+        TODO()
+    }
 
     @Test
     fun `referenced _other_ transplants are substituted by recipient type`() {

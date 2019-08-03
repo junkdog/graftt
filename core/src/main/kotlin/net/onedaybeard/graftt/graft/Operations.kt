@@ -7,6 +7,8 @@ import org.objectweb.asm.Type
 import org.objectweb.asm.commons.MethodRemapper
 import org.objectweb.asm.commons.Remapper
 import org.objectweb.asm.tree.*
+import kotlin.reflect.KMutableProperty
+import kotlin.reflect.KProperty
 
 /**
  * Remaps graftable bytecode from [donor] to this [recipient].
@@ -91,9 +93,29 @@ fun ClassNode.fuse(transplant: Transplant.Method): Result<ClassNode, Msg> {
     // transplants aren't re-used once applied, but with regard
     // to the future, better safe than sorry
     return Ok(transplant.copy(node = transplant.node.copy()))
+        .andThen(this::retainAnnotations)
         .andThen(::substituteTransplants)
         .andThen(this::updateAndVerifyMethod)
         .andThen(this::graft)
+}
+
+private fun ClassNode.retainAnnotations(transplant: Transplant.Method): Result<Transplant.Method, Msg> {
+    val method = transplant.node
+    val original = methods.find { it.signatureEquals(method) }
+        ?: return Ok(transplant)
+
+    fun MutableList<AnnotationNode>.move(property: KMutableProperty<MutableList<AnnotationNode>?>) {
+        if (property.getter.call() == null)
+            property.setter.call(ArrayList<AnnotationNode>())
+
+        property.getter.call()!!.addAll(this)
+        clear()
+    }
+
+    original.invisibleAnnotations?.move(method::invisibleAnnotations)
+    original.visibleAnnotations?.move(method::visibleAnnotations)
+
+    return Ok(transplant)
 }
 
 private fun ClassNode.updateAndVerifyMethod(transplant: Transplant.Method): Result<Transplant.Method, Msg> {
@@ -120,9 +142,11 @@ private fun ClassNode.updateAndVerifyMethod(transplant: Transplant.Method): Resu
                 .onEach { it.name = original!!.name }
                 .count() == 0
 
+
             if (replacesOriginal)
                 methods.remove(original)
 
+            cleanAnnotations(transplant)
             Ok(transplant)
         }
     }
@@ -194,6 +218,14 @@ private fun verifyFieldsNotInitialized(donor: ClassNode): (FieldNode) -> Result<
         else
             Err(Msg.FieldDefaultValueNotSupported(donor.name, f.name))
     }
+}
+
+private fun cleanAnnotations(transplant: Transplant.Method) {
+    val mn = transplant.node
+    if (mn.invisibleAnnotations == null) return
+
+    mn.invisibleAnnotations = mn.invisibleAnnotations
+        .filterNot { it.desc.startsWith("Lnet/onedaybeard/graftt/Graft$") }
 }
 
 private val ctorOrStaticInit: (MethodNode) -> Boolean =
