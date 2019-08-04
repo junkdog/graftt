@@ -86,6 +86,20 @@ fun MethodNode.asSequence() = instructions.asSequence()
 ////// annotations
 
 
+fun ClassNode.annotations(): List<AnnotationNode> {
+    return (invisibleAnnotations ?: listOf()) + (visibleAnnotations ?: listOf())
+}
+
+fun MethodNode.annotations(): List<AnnotationNode> {
+    return (invisibleAnnotations ?: listOf()) + (visibleAnnotations ?: listOf())
+}
+
+fun FieldNode.annotations(): List<AnnotationNode> {
+    return (invisibleAnnotations ?: listOf()) + (visibleAnnotations ?: listOf())
+}
+
+fun List<AnnotationNode>.asTypes(): Set<Type> = map { Type.getType(it.desc) }.toSet()
+
 fun ClassNode.hasAnnotation(type: Type) =
     type in visibleAnnotations || type in invisibleAnnotations
 

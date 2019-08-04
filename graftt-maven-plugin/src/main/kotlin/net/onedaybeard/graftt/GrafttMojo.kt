@@ -91,32 +91,6 @@ class GrafttMojo : AbstractMojo() {
         return transplants.filter(ClassNode::isTransplant)
     }
 
-    private fun logSummary(donated: List<ClassNode>) {
-        fun format(kv: Pair<String, String>, delim: Char = '.'): String {
-            return "$delim".repeat(max(2, LINE_WIDTH - 2 - kv.length))
-                .let { "${kv.first} $it ${kv.second}" }
-        }
-
-        fun header(header: String, delim: Char = ' '): String {
-            return "$delim".repeat(max(2, LINE_WIDTH - 2 - header.length))
-                .let { "$header: $it" }
-        }
-
-        log.info(format("graftt surgical summary:" to "${donated.size}", ' '))
-        log.info("-".repeat(LINE_WIDTH))
-        log.info(header("CONFIG"))
-        log.info(format("enable" to "$enable"))
-        log.info(format("classDir" to "$classDir"))
-        log.info(format("keepTransplants" to "$keepTransplants"))
-        log.info("-".repeat(LINE_WIDTH))
-        log.info(header("TRANSPLANTS"))
-        donated
-            .map { cn -> cn to readRecipientType(cn).andThen(this::loadClassNode).unwrap() }
-            .map { (d, r) -> format(d.shortName to r.shortName) }
-            .forEach(log::info)
-        log.info("-".repeat(LINE_WIDTH))
-    }
-
     private fun transplant(donor: ClassNode, remapper: Remapper) {
         transplant(donor, this::loadClassNode, remapper)
             .andThen(this::save)
@@ -144,5 +118,31 @@ class GrafttMojo : AbstractMojo() {
 
         return project.artifacts.find { it matching this }
             ?: throw IllegalStateException("unable to resolve dependency: $artifactId")
+    }
+
+    private fun logSummary(donated: List<ClassNode>) {
+        fun format(kv: Pair<String, String>, delim: Char = '.'): String {
+            return "$delim".repeat(max(2, LINE_WIDTH - 2 - kv.length))
+                .let { "${kv.first} $it ${kv.second}" }
+        }
+
+        fun header(header: String, delim: Char = ' '): String {
+            return "$delim".repeat(max(2, LINE_WIDTH - 2 - header.length))
+                .let { "$header: $it" }
+        }
+
+        log.info(format("graftt surgical summary:" to "${donated.size}", ' '))
+        log.info("-".repeat(LINE_WIDTH))
+        log.info(header("CONFIG"))
+        log.info(format("enable" to "$enable"))
+        log.info(format("classDir" to "$classDir"))
+        log.info(format("keepTransplants" to "$keepTransplants"))
+        log.info("-".repeat(LINE_WIDTH))
+        log.info(header("TRANSPLANTS"))
+        donated
+            .map { cn -> cn to readRecipientType(cn).andThen(this::loadClassNode).unwrap() }
+            .map { (d, r) -> format(d.shortName to r.shortName) }
+            .forEach(log::info)
+        log.info("-".repeat(LINE_WIDTH))
     }
 }

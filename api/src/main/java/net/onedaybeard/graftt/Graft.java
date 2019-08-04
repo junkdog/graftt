@@ -36,10 +36,13 @@ public final class Graft {
      *
      * Unwanted annotations can be declared in {@code Fuse.remove}.
      * To replace an annotation, it must first be removed or
-     * face an {@code AnnotationAlreadyExists} error.
+     * {@code replaceAnnotations} must be set to true.
      */
     @Documented
     @Retention(CLASS)
-    @Target(METHOD)
-    public @interface Fuse { Class<? extends Annotation>[] remove() default {}; }
+    @Target({FIELD, METHOD})
+    public @interface Fuse {
+        Class<? extends Annotation>[] remove() default {};
+        boolean replaceAnnotations() default false;
+    }
 }

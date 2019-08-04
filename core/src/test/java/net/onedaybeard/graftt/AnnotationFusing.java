@@ -11,7 +11,6 @@ public interface AnnotationFusing {
 
     @Retention(CLASS)
     @Target({TYPE, METHOD, FIELD})
-
     @interface MyAnno { int value() default 0; }
 
     @Retention(RUNTIME)
@@ -30,6 +29,30 @@ public interface AnnotationFusing {
         public void hmm() {}
     }
 
+    class ClashingMethod {
+        @MyAnnoRt
+        public void hmm() {}
+    }
+
+    @Graft.Recipient(ClashingMethod.class)
+    class ClashingMethodTransplant {
+        @MyAnnoRt
+        @Graft.Fuse
+        public void hmm() {}
+    }
+
+    class ClashingField {
+        @MyAnno
+        public String usch;
+    }
+
+    @Graft.Recipient(ClashingField.class)
+    class ClashingFieldTransplant {
+        @MyAnno
+        @Graft.Fuse
+        public String usch;
+
+    }
 
     class Foo {
         @MyAnno

@@ -9,7 +9,6 @@ import kotlin.test.assertTrue
 
 class GraftTests {
 
-
     @Test
     fun `annotations from original method are retained on transplanted`() {
         val mn = transplant<AnnotationFusing.BarTransplant>()
@@ -28,12 +27,20 @@ class GraftTests {
 
     @Test
     fun `fuse annotations on field`() {
-        TODO()
+        transplant<AnnotationFusing.ClashingMethodTransplant>()
+           .assertErr(Msg.AnnotationAlreadyExists(
+               name = "net/onedaybeard/graftt/AnnotationFusing.ClashingFieldTransplant",
+               anno = "net/onedaybeard/graftt/AnnotationFusing.MyAnno",
+               symbol = "usch"))
     }
 
     @Test
-    fun `detect annotation clash`() {
-        TODO()
+    fun `detect annotation clash on method`() {
+        transplant<AnnotationFusing.ClashingMethodTransplant>()
+           .assertErr(Msg.AnnotationAlreadyExists(
+               name = "net/onedaybeard/graftt/AnnotationFusing.ClashingMethodTransplant",
+               anno = "net/onedaybeard/graftt/AnnotationFusing.MyAnnoRt",
+               symbol = "hmm"))
     }
 
     @Test
