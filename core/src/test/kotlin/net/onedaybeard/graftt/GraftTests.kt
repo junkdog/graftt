@@ -26,12 +26,20 @@ class GraftTests {
     }
 
     @Test
+    fun `fuse works on fields`() {
+        transplant<FusedField.FooTransplant>()
+            .onFailure(`(╯°□°）╯︵ ┻━┻`)
+
+        transplant<FusedField.FooWrongTransplant>()
+            .assertErr(Msg.WrongFuseSignature(
+                name = "net/onedaybeard/graftt/FusedField.FooWrongTransplant",
+                symbol = "ohNo"
+            ))
+    }
+
+    @Test
     fun `fuse annotations on field`() {
-        transplant<AnnotationFusing.ClashingMethodTransplant>()
-           .assertErr(Msg.AnnotationAlreadyExists(
-               name = "net/onedaybeard/graftt/AnnotationFusing.ClashingFieldTransplant",
-               anno = "net/onedaybeard/graftt/AnnotationFusing.MyAnno",
-               symbol = "usch"))
+        TODO()
     }
 
     @Test
@@ -41,6 +49,15 @@ class GraftTests {
                name = "net/onedaybeard/graftt/AnnotationFusing.ClashingMethodTransplant",
                anno = "net/onedaybeard/graftt/AnnotationFusing.MyAnnoRt",
                symbol = "hmm"))
+    }
+
+    @Test
+    fun `detect annotation clash on field`() {
+        transplant<AnnotationFusing.ClashingMethodTransplant>()
+           .assertErr(Msg.AnnotationAlreadyExists(
+               name = "net/onedaybeard/graftt/AnnotationFusing.ClashingFieldTransplant",
+               anno = "net/onedaybeard/graftt/AnnotationFusing.MyAnno",
+               symbol = "usch"))
     }
 
     @Test

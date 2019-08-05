@@ -20,7 +20,7 @@ sealed class Msg {
     data class FieldAlreadyExists(val name: String, val field: String) : Msg()
     data class InterfaceAlreadyExists(val name: String, val iface: String) : Msg()
     data class MethodAlreadyExists(val name: String, val method: String) : Msg()
-    data class WrongFuseSignature(val name: String, val method: String) : Msg()
+    data class WrongFuseSignature(val name: String, val symbol: String) : Msg()
 
     data class TransplantMustNotExtendClass(val name: String) : Msg()
     data class FieldDefaultValueNotSupported(val name: String, val field: String) : Msg()
