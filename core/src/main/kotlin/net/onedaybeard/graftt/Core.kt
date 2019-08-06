@@ -3,6 +3,9 @@ package net.onedaybeard.graftt
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
+import net.onedaybeard.graftt.asm.classNode
+import net.onedaybeard.graftt.asm.classReader
+import net.onedaybeard.graftt.asm.toBytes
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.analysis.Analyzer
@@ -25,13 +28,10 @@ fun <T> anyOf(vararg predicates: (T) -> Boolean): (T) -> Boolean = { t -> predic
 fun <T> allOf(vararg predicates: (T) -> Boolean): (T) -> Boolean = { t -> predicates.all { it(t) } }
 fun <T> noneOf(vararg predicates: (T) -> Boolean): (T) -> Boolean = { t -> predicates.none { it(t) } }
 
-
 fun ClassNode.toDebugString(): String {
     val sw = StringWriter()
-    val pw = PrintWriter(sw)
-
     classReader(toBytes())
-        .accept(TraceClassVisitor(pw), ClassReader.EXPAND_FRAMES)
+        .accept(TraceClassVisitor(PrintWriter(sw)), ClassReader.EXPAND_FRAMES)
 
     return sw.toString()
 }

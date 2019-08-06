@@ -33,16 +33,30 @@ public final class Graft {
      * Transplant the compiled bytecode over to the recipient class,
      * translating any references so that they point to the target
      * class once transplanted.
-     *
-     * Unwanted annotations can be declared in {@code Fuse.remove}.
-     * To replace an annotation, it must first be removed or
-     * {@code overwriteAnnotations} must be set to true.
      */
     @Documented
     @Retention(CLASS)
-    @Target({FIELD, METHOD})
-    public @interface Fuse {
+    @Target(METHOD)
+    public @interface Fuse {}
+
+    /**
+     * Specifies how to deal with annotations on recipient class. This
+     * annotation is scoped to the element it is decorating: class, method
+     * or field.
+     * <p/>
+     * All annotations from fused methods and added fields are copied
+     * over to the recipient by default. This annotation only needed for:
+     * <ul>
+     *  <li>indicating that annotations to recipient class or its fields</li>
+     *  <li><i>removing</i> annotations on recipient</li>
+     *  <li><i>overwriting</i> annotations on transplant</li>
+     * </ul>
+     */
+    @Documented
+    @Retention(CLASS)
+    @Target({TYPE, FIELD, METHOD})
+    public @interface Annotations {
         Class<? extends Annotation>[] remove() default {};
-        boolean overwriteAnnotations() default false;
+        boolean overwrite() default false;
     }
 }

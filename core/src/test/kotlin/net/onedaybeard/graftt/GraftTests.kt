@@ -1,6 +1,8 @@
 package net.onedaybeard.graftt
 
 import com.github.michaelbull.result.*
+import net.onedaybeard.graftt.asm.hasAnnotation
+import net.onedaybeard.graftt.asm.type
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -58,6 +60,16 @@ class GraftTests {
                name = "net/onedaybeard/graftt/AnnotationFusing.ClashingFieldTransplant",
                anno = "net/onedaybeard/graftt/AnnotationFusing.MyAnno",
                symbol = "usch"))
+    }
+
+    @Test
+    fun `detect annotation clash on class`() {
+        TODO()
+//        transplant<AnnotationFusing.ClashingClassTransplant>()
+//           .assertErr(Msg.AnnotationAlreadyExists(
+//               name = "net/onedaybeard/graftt/AnnotationFusing.ClashingClassTransplant",
+//               anno = "net/onedaybeard/graftt/AnnotationFusing.MyAnno",
+//               symbol = "ClashingClass"))
     }
 
     @Test

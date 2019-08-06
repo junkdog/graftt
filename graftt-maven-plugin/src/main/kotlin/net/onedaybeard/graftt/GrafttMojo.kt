@@ -1,6 +1,9 @@
 package net.onedaybeard.graftt
 
 import com.github.michaelbull.result.*
+import net.onedaybeard.graftt.asm.classNode
+import net.onedaybeard.graftt.asm.shortName
+import net.onedaybeard.graftt.asm.toBytes
 import net.onedaybeard.graftt.graft.isTransplant
 import net.onedaybeard.graftt.graft.transplant
 import net.onedaybeard.graftt.graft.readRecipientType

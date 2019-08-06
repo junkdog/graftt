@@ -49,7 +49,7 @@ public interface AnnotationFusing {
     @Graft.Recipient(ClashingField.class)
     class ClashingFieldTransplant {
         @MyAnno
-        @Graft.Fuse
+        @Graft.Annotations
         public String usch;
 
     }
@@ -72,8 +72,8 @@ public interface AnnotationFusing {
 
     @Graft.Recipient(Foo.class)
     class FooTransplant {
-        @Graft.Fuse(remove = {MyAnno.class, MyAnnoRt.class})
         @MyAnno
+        @Graft.Annotations(remove = {MyAnno.class, MyAnnoRt.class})
         public void a() {}
 
         @MyAnnoRt(1)

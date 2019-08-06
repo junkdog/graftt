@@ -1,9 +1,7 @@
 package net.onedaybeard.graftt.graft
 
-import net.onedaybeard.graftt.annotations
-import org.objectweb.asm.Type
+import net.onedaybeard.graftt.asm.annotations
 import org.objectweb.asm.commons.Remapper
-import org.objectweb.asm.commons.SimpleRemapper
 import org.objectweb.asm.tree.AnnotationNode
 import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.MethodNode
@@ -25,6 +23,3 @@ sealed class Transplant {
         is Method -> node.annotations()
     }
 }
-
-fun Map<Type, Type>.toRemapper() = SimpleRemapper(this
-    .map { (key, value) -> key.internalName to value.internalName }.toMap())

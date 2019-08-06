@@ -13,13 +13,13 @@ public interface FusedField {
         // note: fusing fields only ever makes sense when
         // annotations need to be updated; `hmm` below
         // has no effect on Foo.
-        @Graft.Fuse
         public String hmm;
     }
 
     @Graft.Recipient(Foo.class)
     class FooWrongTransplant {
-        @Graft.Fuse
+
+        @Graft.Annotations
         public String ohNo;
     }
 }

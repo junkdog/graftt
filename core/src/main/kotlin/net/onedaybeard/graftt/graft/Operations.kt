@@ -2,6 +2,7 @@ package net.onedaybeard.graftt.graft
 
 import com.github.michaelbull.result.*
 import net.onedaybeard.graftt.*
+import net.onedaybeard.graftt.asm.*
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type
 import org.objectweb.asm.commons.MethodRemapper
@@ -10,7 +11,7 @@ import org.objectweb.asm.tree.*
 import kotlin.reflect.KMutableProperty
 
 /**
- * Remaps graftable bytecode from [donor] to this [recipient].
+ * Remaps graftable bytecode from [donor] to [recipient].
  *
  * All interfaces, methods and fields are transplanted, except
  * those annotated with [Graft.Mock]. Methods annotated with
@@ -20,8 +21,8 @@ import kotlin.reflect.KMutableProperty
  * Transplants other than [donor] can be referenced. All referenced
  * transplants are substituted with their recipient types.
  *
- * As the [recipient] is known, [Graft.Recipient] is not required
- * on [donor].
+ * As the [recipient] is known, [donor] is not checked for
+ * [Graft.Recipient].
  */
 fun transplant(donor: ClassNode,
                recipient: ClassNode,
@@ -183,7 +184,6 @@ fun readRecipientType(donor: ClassNode): Result<Type, Msg> {
         .andThen { it.get<Type>("value") }
         .mapSafeError { Msg.MissingGraftTargetAnnotation(donor.name) }
 }
-
 
 /** rewrites this [ClassNode] according to [method] transplant */
 private fun ClassNode.graft(method: Transplant.Method): Result<ClassNode, Msg> {
