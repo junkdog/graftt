@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>net.onedaybeard.graftt</groupId>
     <artifactId>root</artifactId>
-    <version>0.2.0-SNAPSHOT</version>
+    <version>0.1.2</version>
     <packaging>pom</packaging>
 
     <name>graftt - root</name>
@@ -27,7 +27,7 @@
         <url>https://github.com/junkdog/graftt/</url>
         <connection>scm:git:git@github.com:junkdog/graftt.git</connection>
         <developerConnection>scm:git:git@github.com:junkdog/graftt.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>0.1.2</tag>
     </scm>
 
     <licenses>
@@ -192,7 +192,7 @@
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
-                                <goals/> <!-- disable plugin -->
+                                <goals /> <!-- disable plugin -->
                             </execution>
                         </executions>
                     </plugin>
