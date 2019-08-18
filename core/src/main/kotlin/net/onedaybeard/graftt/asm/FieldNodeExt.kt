@@ -11,12 +11,7 @@ fun FieldNode.annotations(): List<AnnotationNode> =
 fun FieldNode.hasAnnotation(type: Type) =
     type in visibleAnnotations || type in invisibleAnnotations
 
-fun FieldNode.copy() = FieldNode(
-    access,
-    name,
-    desc,
-    signature,
-    value)
+fun FieldNode.copy() = FieldNode(access, name, desc, signature, value)
 
 fun FieldNode.signatureEquals(other: FieldNode): Boolean {
     return name      == other.name
