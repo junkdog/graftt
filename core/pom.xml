@@ -15,18 +15,7 @@
 
     <properties>
         <asm.version>7.1</asm.version>
-        <dokka.version>0.9.18</dokka.version>
-        <dokka.skip>true</dokka.skip>
-        <dokka.format>html</dokka.format>
     </properties>
-
-    <pluginRepositories>
-        <pluginRepository>
-            <id>jcenter</id>
-            <name>JCenter</name>
-            <url>https://jcenter.bintray.com/</url>
-        </pluginRepository>
-    </pluginRepositories>
 
 
     <dependencies>
@@ -126,72 +115,4 @@
         </dependency>
     </dependencies>
 
-    <profiles>
-        <profile>
-            <id>release</id>
-            <properties>
-                <dokka.skip>false</dokka.skip>
-            </properties>
-            <build>
-                <plugins>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.jetbrains.dokka</groupId>
-                <artifactId>dokka-maven-plugin</artifactId>
-                <version>${dokka.version}</version>
-                <executions>
-                    <execution>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>dokka</goal>
-                            <goal>javadocJar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <skip>${dokka.skip}</skip>
-
-                    <!-- html, markdown -->
-                    <outputFormat>${dokka.format}</outputFormat>
-                    <jdkVersion>8</jdkVersion>
-                    <skipEmptyPackages>true</skipEmptyPackages>
-
-                    <sourceLinks>
-                        <link>
-                            <url>https://www.javadoc.io/doc/org.ow2.asm/asm/</url>
-                            <url>https://www.javadoc.io/doc/org.ow2.asm/asm-tree/</url>
-                        </link>
-                        <link>
-                            <dir>${project.basedir}/src/main/kotlin</dir>
-                            <url>https://github.com/junkdog/graftt/tree/master/core/src/main/kotlin</url>
-                            <urlSuffix>#L</urlSuffix>
-                        </link>
-                    </sourceLinks>
-
-                    <sourceRoots>
-                        <root>
-                            <path>${project.basedir}/src/main/kotlin</path>
-                        </root>
-                    </sourceRoots>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.10.3</version>
-                <executions>
-                    <execution>
-                        <id>attach-javadocs</id>
-                        <goals /> <!-- disable plugin -->
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
 </project>
