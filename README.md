@@ -116,7 +116,7 @@ Nice to have, but not now:
 
 ## Usage
 
-Current `$VERSION` is `0.1.0-SNAPSHOT`
+Current `$VERSION` is `0.1.1`
 
 ### Maven
 
