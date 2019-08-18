@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>net.onedaybeard.graftt</groupId>
     <artifactId>root</artifactId>
-    <version>0.2.0-SNAPSHOT</version>
+    <version>0.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>graftt - root</name>
     <url>https://github.com/junkdog/graftt</url>
@@ -254,6 +254,16 @@
             </plugin>
 
         </plugins>
+
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <artifactId>maven-invoker-plugin</artifactId>
+                    <version>3.2.0</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
+
 
 </project>
