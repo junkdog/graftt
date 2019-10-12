@@ -32,23 +32,23 @@ fun premain(agentArgs: String?, inst: Instrumentation) {
         }
 
         fun register(root: File) {
-            log.info { "searching for transplants: $root" }
+                log.info { "searching for transplants: $root" }
 
-            val transplantNodes = classNodes(root)
-                .filter(ClassNode::isTransplant)
+                val transplantNodes = classNodes(root)
+                        .filter(ClassNode::isTransplant)
 
-            fun recipientName(cn: ClassNode): String {
-                return readRecipientType(cn)
-                    .unwrap()
-                    .internalName
-            }
+                fun recipientName(cn: ClassNode): String {
+                    return readRecipientType(cn)
+                            .unwrap()
+                            .internalName
+                }
 
-            transplantNodes.associateByTo(transplants) { cn ->
-                recipientName(cn)
-                    .also { log.debug { "found transplant: ${cn.name} -> $it" } }
-            }
+                transplantNodes.associateByTo(transplants) { cn ->
+                    recipientName(cn)
+                            .also { log.debug { "found transplant: ${cn.name} -> $it" } }
+                }
 
-            transplantNodes.associateByTo(mapping, ClassNode::name, ::recipientName)
+                transplantNodes.associateByTo(mapping, ClassNode::name, ::recipientName)
         }
 
         override fun transform(
@@ -92,7 +92,7 @@ private fun validate(args: Map<String, List<String>>) {
 private fun parseArgs(rawArgs: String?): Map<String, List<String>> {
     if (rawArgs == null) return mapOf()
 
-    fun String.token(index: Int) = split(":")[index]
+    fun String.token(index: Int) = split(":", limit = 2)[index]
 
     return rawArgs
         .split(";")
