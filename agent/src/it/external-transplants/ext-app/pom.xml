@@ -35,7 +35,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.0.0-M3</version>
                 <configuration>
-                    <argLine>-javaagent:${agent}=cp:${transplants.jar}</argLine>
+                    <argLine>-javaagent:${agent}=cp=${transplants.jar}</argLine>
                     <useSystemClassLoader>false</useSystemClassLoader>
                 </configuration>
             </plugin>

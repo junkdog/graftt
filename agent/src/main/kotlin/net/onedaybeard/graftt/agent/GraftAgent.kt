@@ -92,7 +92,7 @@ private fun validate(args: Map<String, List<String>>) {
 private fun parseArgs(rawArgs: String?): Map<String, List<String>> {
     if (rawArgs == null) return mapOf()
 
-    fun String.token(index: Int) = split(":")[index]
+    fun String.token(index: Int) = split("=")[index]
 
     return rawArgs
         .split(";")
