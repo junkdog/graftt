@@ -65,7 +65,7 @@ class GrafttMojo : AbstractMojo() {
         // commence surgery
         transplants
             .onEach { cn -> transplant(cn, remapper) }
-            .let(this::logSummary)
+            .let(::logSummary)
 
         if (!keepTransplants) {
             classNodes(classDir)
@@ -96,7 +96,7 @@ class GrafttMojo : AbstractMojo() {
 
     private fun transplant(donor: ClassNode, remapper: Remapper) {
         transplant(donor, this::loadClassNode, remapper)
-            .andThen(this::save)
+            .andThen(::save)
             .onFailure(`(╯°□°）╯︵ ┻━┻`)
     }
 

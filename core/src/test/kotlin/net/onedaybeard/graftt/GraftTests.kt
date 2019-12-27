@@ -1,13 +1,9 @@
 package net.onedaybeard.graftt
 
 import com.github.michaelbull.result.*
-import net.onedaybeard.graftt.asm.hasAnnotation
-import net.onedaybeard.graftt.asm.type
+import net.onedaybeard.graftt.asm.*
 import org.junit.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
-
 
 class GraftTests {
 
@@ -17,9 +13,9 @@ class GraftTests {
             .map { cn -> cn.methods.first { it.name == "hmm" } }
             .unwrap()
 
-        assertTrue(mn.hasAnnotation(type<AnnotationFusing.MyAnno>()))
-        assertTrue(mn.hasAnnotation(type<AnnotationFusing.MyAnnoRt>()))
-        assertFalse(mn.hasAnnotation(type<Graft.Fuse>()))
+        assertEquals(
+            setOf(type<AnnotationFusing.MyAnno>(), type<AnnotationFusing.MyAnnoRt>()),
+            mn.annotations().asTypes())
     }
 
     @Test
@@ -28,20 +24,20 @@ class GraftTests {
     }
 
     @Test
-    fun `fuse works on fields`() {
+    fun `fuse fields with annotations`() {
         transplant<FusedField.FooTransplant>()
             .onFailure(`(╯°□°）╯︵ ┻━┻`)
+            .onSuccess { cn ->
+                val f = cn.fields.first { it.name == "hmm" }
+                assertEquals(
+                    setOf(type<FusedField.Yolo>(), type<FusedField.Yolo2>()),
+                    f.annotations().asTypes())
 
-        transplant<FusedField.FooWrongTransplant>()
-            .assertErr(Msg.WrongFuseSignature(
-                name = "net/onedaybeard/graftt/FusedField.FooWrongTransplant",
-                symbol = "ohNo"
-            ))
-    }
-
-    @Test
-    fun `fuse annotations on field`() {
-        TODO()
+                val f2 = cn.fields.first { it.name == "transplantedWithAnnotation" }
+                assertEquals(
+                    setOf(type<FusedField.Yolo>()),
+                    f2.annotations().asTypes())
+            }
     }
 
     @Test
@@ -55,10 +51,10 @@ class GraftTests {
 
     @Test
     fun `detect annotation clash on field`() {
-        transplant<AnnotationFusing.ClashingMethodTransplant>()
+        transplant<AnnotationFusing.ClashingFieldTransplant>()
            .assertErr(Msg.AnnotationAlreadyExists(
-               name = "net/onedaybeard/graftt/AnnotationFusing.ClashingFieldTransplant",
-               anno = "net/onedaybeard/graftt/AnnotationFusing.MyAnno",
+               name = "net/onedaybeard/graftt/AnnotationFusing\$ClashingFieldTransplant",
+               anno = "net/onedaybeard/graftt/AnnotationFusing\$MyAnno",
                symbol = "usch"))
     }
 
@@ -272,5 +268,14 @@ class GraftTests {
             .assertErr(Msg.WrongFuseSignature(
                 "net/onedaybeard/graftt/SingleClassWrongFuseTransplant",
                 "yolo"))
+    }
+
+    @Test
+    fun `fail when fused field signature is wrong`() {
+        transplant<FusedField.FooWrongSigTransplant>()
+            .assertErr(Msg.WrongFuseSignature(
+                name = "net/onedaybeard/graftt/FusedField\$FooWrongSigTransplant",
+                symbol = "ohNo"
+            ))
     }
 }

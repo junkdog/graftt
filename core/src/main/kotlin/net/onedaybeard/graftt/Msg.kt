@@ -14,6 +14,7 @@ sealed class Msg {
 
     object None : Msg()
     data class NoSuchKey(val key: String) : Msg()
+    data class NoSuchAnnotation(val key: String) : Msg()
 
     data class AnnotationAlreadyExists(val name: String, val symbol: String, val anno: String) : Msg()
 

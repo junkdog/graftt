@@ -1,5 +1,6 @@
 package net.onedaybeard.graftt.asm
 
+import net.onedaybeard.graftt.graft.isGraftAnnotation
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.AnnotationNode
 import org.objectweb.asm.tree.FieldNode
@@ -11,7 +12,15 @@ fun FieldNode.annotations(): List<AnnotationNode> =
 fun FieldNode.hasAnnotation(type: Type) =
     type in visibleAnnotations || type in invisibleAnnotations
 
-fun FieldNode.copy() = FieldNode(access, name, desc, signature, value)
+fun FieldNode.copy(): FieldNode {
+    val fn = FieldNode(access, name, desc, signature, value)
+    fn.visibleAnnotations = ArrayList((visibleAnnotations ?: listOf()))
+    fn.invisibleAnnotations = (invisibleAnnotations ?: listOf())
+        .filterNot(AnnotationNode::isGraftAnnotation)
+        .let { ArrayList(it) }
+
+    return fn
+}
 
 fun FieldNode.signatureEquals(other: FieldNode): Boolean {
     return name      == other.name

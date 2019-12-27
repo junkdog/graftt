@@ -36,21 +36,17 @@ public final class Graft {
      */
     @Documented
     @Retention(CLASS)
-    @Target(METHOD)
+    @Target({METHOD, FIELD})
     public @interface Fuse {}
 
     /**
      * Specifies how to deal with annotations on recipient class. This
-     * annotation is scoped to the element it is decorating: class, method
-     * or field.
+     * annotation is scoped to the immediate element it is decorating:
+     * class, method or field.
      * <p/>
      * All annotations from fused methods and added fields are copied
-     * over to the recipient by default. This annotation only needed for:
-     * <ul>
-     *  <li>indicating that annotations to recipient class or its fields</li>
-     *  <li><i>removing</i> annotations on recipient</li>
-     *  <li><i>overwriting</i> annotations on transplant</li>
-     * </ul>
+     * over to the recipient by default. This annotation only needed for
+     * removing annotations, and enabling overwriting/updating annotations.
      */
     @Documented
     @Retention(CLASS)

@@ -36,9 +36,10 @@ fun <T> Result<T, Msg>.mapSafeError(f: (Msg) -> Msg): Result<T, Msg> {
 /** Transforms [Msg] unless it is [Msg.None] */
 fun <T> Result<T, Msg>.safeRecover(f: (Msg) -> T): Result<T, Msg> {
     return when (val e = getError()) {
-        null        -> this
-        is Msg.None -> Ok(f(e))
-        else        -> this
+        null                    -> this
+        is Msg.None             -> Ok(f(e))
+        is Msg.NoSuchAnnotation -> Ok(f(e))
+        else                    -> this
     }
 }
 
