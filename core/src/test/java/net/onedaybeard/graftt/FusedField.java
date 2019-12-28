@@ -28,6 +28,22 @@ public interface FusedField {
         public String ohNo;
     }
 
+    @Graft.Recipient(Foo.class)
+    class FooRemoverTransplant {
+
+        @Graft.Fuse
+        @Graft.Annotations(remove = Yolo2.class)
+        public String hmm;
+    }
+
+    @Graft.Recipient(Foo.class)
+    class FooWrongRemoverTransplant {
+
+        @Graft.Fuse
+        @Graft.Annotations(remove = Yolo.class) // not present
+        public String hmm;
+    }
+
     @interface Yolo {}
     @interface Yolo2 {}
 }

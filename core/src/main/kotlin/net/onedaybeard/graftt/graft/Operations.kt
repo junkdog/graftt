@@ -57,7 +57,8 @@ fun transplant(
 /** apply [transplant] to this [ClassNode] */
 fun ClassNode.fuse(transplant: Transplant.Field): Result<ClassNode, Msg> {
     return Ok(transplant)
-        .andThen { retainAnnotations(it) }
+        .andThen { removeAnnotations(it) }
+        .andThen { fuseAnnotations(it) }
         .andThen { graft(it) }
 }
 
@@ -67,7 +68,7 @@ fun ClassNode.fuse(transplant: Transplant.Method): Result<ClassNode, Msg> {
     // transplants aren't re-used once applied, but with regard
     // to the future, better safe than sorry
     return Ok(transplant.copy(node = transplant.node.copy()))
-        .andThen { retainAnnotations(it) }
+        .andThen { fuseAnnotations(it) }
         .andThen(::substituteTransplants)
         .andThen(::updateOriginalMethod)
         .andThen(::graft)
@@ -86,7 +87,7 @@ fun <T> MutableList<T>.copyIntoNullable(destination: KMutableProperty<MutableLis
     clear()
 }
 
-private fun ClassNode.retainAnnotations(transplant: Transplant.Method): Result<Transplant.Method, Msg> {
+private fun ClassNode.fuseAnnotations(transplant: Transplant.Method): Result<Transplant.Method, Msg> {
     val method = transplant.node
     val original = methods.find { it.signatureEquals(method) }
         ?: return Ok(transplant)
@@ -97,7 +98,31 @@ private fun ClassNode.retainAnnotations(transplant: Transplant.Method): Result<T
     return Ok(transplant)
 }
 
-private fun ClassNode.retainAnnotations(transplant: Transplant.Field): Result<Transplant.Field, Msg> {
+private fun ClassNode.removeAnnotations(transplant: Transplant.Field): Result<Transplant.Field, Msg> {
+    val field = transplant.node
+    val original = fields.find { it.signatureEquals(field) }
+        ?: return Ok(transplant)
+
+    removeAnnotations(transplant.annotationsToRemove(),
+        original::invisibleAnnotations,
+        original::visibleAnnotations)
+
+    return Ok(transplant)
+}
+
+private fun removeAnnotations(
+    toRemove: Set<Type>,
+    vararg sources: KMutableProperty<MutableList<AnnotationNode>?>
+) {
+    sources.forEach { source ->
+        if (source.getter.call() == null)
+            source.setter.call(ArrayList<Type>())
+
+        source.getter.call()!!.removeIf { Type.getType(it.desc) in toRemove }
+    }
+}
+
+private fun ClassNode.fuseAnnotations(transplant: Transplant.Field): Result<Transplant.Field, Msg> {
     val field = transplant.node
     val original = fields.find { it.signatureEquals(field) }
         ?: return Ok(transplant)
@@ -108,6 +133,7 @@ private fun ClassNode.retainAnnotations(transplant: Transplant.Field): Result<Tr
     return Ok(transplant)
 }
 
+
 private fun ClassNode.validateField(transplant: Transplant.Field): Result<Transplant.Field, Msg> {
     val field = transplant.node
     val original = fields.find { it.signatureEquals(field) }
@@ -115,26 +141,37 @@ private fun ClassNode.validateField(transplant: Transplant.Field): Result<Transp
     val doFuse = field.hasAnnotation(type<Graft.Fuse>())
     val canFuse = original != null
 
-    when {
-        doFuse && !canFuse -> return Err(Msg.WrongFuseSignature(transplant.donor, field.name))
-        !doFuse && canFuse -> return Err(Msg.FieldAlreadyExists(transplant.donor, field.name))
-        !doFuse && !canFuse -> return Ok(transplant) // transplanting new field + all annotations
+    return when {
+        doFuse && !canFuse -> Err(Msg.WrongFuseSignature(transplant.donor, field.name))
+        !doFuse && canFuse -> Err(Msg.FieldAlreadyExists(transplant.donor, field.name))
+        else               -> Ok(transplant)
+    }
+}
+
+private fun ClassNode.validateAnnotations(transplant: Transplant.Field): Result<Transplant.Field, Msg> {
+    val field = transplant.node
+    val original = fields.find { it.signatureEquals(field) }
+
+    val toRemove = transplant.annotationsToRemove()
+    if (original == null) {
+        return if (toRemove.isEmpty())
+            Ok(transplant)
+        else
+            Err(Msg.NoSuchAnnotation(toRemove.joinToString { it.className }))
     }
 
-    val config = field.annotation<Graft.Annotations>().get()
-
-    // can remove all annotations?
-    val unableToRemove = (config?.values ?: listOf())
-    if (unableToRemove.isNotEmpty()) TODO("fix this")
-//        .map { it }
-//        .filter {  }
+    val unableToRemove = toRemove - original.annotations().asTypes()
+    if (unableToRemove.isNotEmpty()) {
+        return Err(Msg.UnableToRemoveAnnotation(
+            transplant.donor, field.name, unableToRemove.joinToString()))
+    }
 
     // check for clashes (TODO: extract?)
     if (!transplant.overwriteAnnotations()) {
         val clashing = transplant.annotations()
             .filterNot(AnnotationNode::isGraftAnnotation)
             .asTypes()
-            .intersect(original?.annotations().asTypes())
+            .intersect(original.annotations().asTypes() - toRemove)
             .map { it.internalName }
 
         if (clashing.isNotEmpty()) {
@@ -308,6 +345,7 @@ private class Surgery(val recipient: ClassNode, val remapper: Remapper) {
             .mapAll(verifyFieldNotInitialized(donor))
             .mapAll { f -> Ok(Transplant.Field(donor.name, f, remapper)) }
             .mapAll(recipient::validateField)
+            .mapAll(recipient::validateAnnotations)
             .mapAll { t -> Ok(t.copy(donor = remapper.mapType(donor.name))) }
             .mapAll(recipient::fuse)
             .map { donor }
@@ -321,3 +359,4 @@ private class Surgery(val recipient: ClassNode, val remapper: Remapper) {
             .map { donor }
     }
 }
+

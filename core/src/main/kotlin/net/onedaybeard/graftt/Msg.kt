@@ -17,6 +17,7 @@ sealed class Msg {
     data class NoSuchAnnotation(val key: String) : Msg()
 
     data class AnnotationAlreadyExists(val name: String, val symbol: String, val anno: String) : Msg()
+    data class UnableToRemoveAnnotation(val name: String, val symbol: String, val anno: String) : Msg()
 
     data class FieldAlreadyExists(val name: String, val field: String) : Msg()
     data class InterfaceAlreadyExists(val name: String, val iface: String) : Msg()

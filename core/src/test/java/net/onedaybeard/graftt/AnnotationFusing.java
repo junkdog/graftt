@@ -19,13 +19,13 @@ public interface AnnotationFusing {
 
     class Bar {
         @MyAnno
-        @MyAnnoRt
         public void hmm() {}
     }
 
     @Graft.Recipient(Bar.class)
     class BarTransplant {
         @Graft.Fuse
+        @MyAnnoRt
         public void hmm() {}
     }
 

@@ -1,15 +1,10 @@
 package net.onedaybeard.graftt.graft
 
-import com.github.michaelbull.result.andThen
-import com.github.michaelbull.result.fold
-import com.github.michaelbull.result.map
-import com.github.michaelbull.result.toResultOr
+import com.github.michaelbull.result.*
 import net.onedaybeard.graftt.Graft
 import net.onedaybeard.graftt.Msg
-import net.onedaybeard.graftt.asm.annotations
-import net.onedaybeard.graftt.asm.get
-import net.onedaybeard.graftt.asm.hasAnnotation
-import net.onedaybeard.graftt.asm.type
+import net.onedaybeard.graftt.asm.*
+import org.objectweb.asm.Type
 import org.objectweb.asm.commons.Remapper
 import org.objectweb.asm.tree.AnnotationNode
 import org.objectweb.asm.tree.FieldNode
@@ -42,4 +37,22 @@ sealed class Transplant {
             .andThen { it.get<Boolean>("overwrite") }
             .fold(success = { it }, failure = { false })
     }
+
+
+}
+
+private typealias TypeList = java.util.ArrayList<Type>
+
+fun Transplant.Field.annotationsToRemove(): Set<Type> {
+    return node.annotation<Graft.Annotations>()
+        .andThen { it.get<TypeList>("remove") }
+        .map { it.toSet() }
+        .get() ?: setOf()
+}
+
+fun Transplant.Method.annotationsToRemove(): Set<Type> {
+    return node.annotation<Graft.Annotations>()
+        .andThen { it.get<TypeList>("remove") }
+        .map { it.toSet() }
+        .get() ?: setOf()
 }
