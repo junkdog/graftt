@@ -3,10 +3,9 @@ package net.onedaybeard.graftt
 import com.github.michaelbull.result.*
 import net.onedaybeard.graftt.asm.*
 import org.junit.Test
+import org.objectweb.asm.tree.MethodNode
 import kotlin.test.assertEquals
 
-// TODO: overwrite: class, method
-// TODO: remove: class, method, field
 class GraftAnnotationTests {
 
     @Test
@@ -49,7 +48,28 @@ class GraftAnnotationTests {
 
     @Test
     fun `remove annotation from method`() {
-        TODO()
+        fun MethodNode.readMyAnnoRt(): Int? {
+            return annotation<AnnotationFusing.MyAnnoRt>()
+                    .andThen { it.get<Int>("value") }
+                    .get()
+        }
+
+        transplant<AnnotationFusing.FooTransplant>()
+            .onFailure(`(╯°□°）╯︵ ┻━┻`)
+            .onSuccess { cn ->
+                val funA = cn.methods.first { it.name == "a" }
+                assertEquals(
+                    setOf(type<AnnotationFusing.MyAnnoRt>()),
+                    funA.annotations().asTypes())
+                assertEquals(1, funA.readMyAnnoRt())
+
+                val funB = cn.methods.first { it.name == "b" }
+                assertEquals(1, funB.readMyAnnoRt())
+                assertEquals(
+                    setOf(type<AnnotationFusing.MyAnnoRt>()),
+                    funB.annotations().asTypes())
+
+            }
     }
 
     @Test
@@ -68,8 +88,8 @@ class GraftAnnotationTests {
     fun `detect annotation clash on method`() {
         transplant<AnnotationFusing.ClashingMethodTransplant>()
            .assertErr(Msg.AnnotationAlreadyExists(
-               name = "net/onedaybeard/graftt/AnnotationFusing.ClashingMethodTransplant",
-               anno = "net/onedaybeard/graftt/AnnotationFusing.MyAnnoRt",
+               name = "net/onedaybeard/graftt/AnnotationFusing\$ClashingMethodTransplant",
+               anno = "net/onedaybeard/graftt/AnnotationFusing\$MyAnnoRt",
                symbol = "hmm"))
     }
 

@@ -1,30 +1,21 @@
 package net.onedaybeard.graftt
 
-import com.github.michaelbull.result.*
 import net.onedaybeard.graftt.asm.*
 import net.onedaybeard.graftt.graft.Transplant
+import net.onedaybeard.graftt.graft.annotationsToRemove
+import net.onedaybeard.graftt.graft.overwriteAnnotations
 import org.junit.Test
-import org.objectweb.asm.Type
 import org.objectweb.asm.commons.SimpleRemapper
-import org.objectweb.asm.tree.AnnotationNode
-import org.objectweb.asm.tree.ClassNode
-import org.objectweb.asm.tree.FieldNode
-import org.objectweb.asm.tree.MethodNode
-import kotlin.reflect.KClass
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class FnTests {
+class AnnotationTests {
 
     @Test
     fun `read types from Graft|@Annotations#remove`() {
         val types = classNode<AnnotationFusing.FooTransplant>()
             .let { it.methods.first { f -> f.name == "a" } }
-            .annotation<Graft.Annotations>()
-            .andThen { it.get<ArrayList<Type>>("remove") }
-            .onFailure(`(╯°□°）╯︵ ┻━┻`)
-            .unwrap()
+            .annotationsToRemove()
 
         assertEquals(
             setOf(type<AnnotationFusing.MyAnno>(), type<AnnotationFusing.MyAnnoRt>()),
@@ -36,7 +27,7 @@ class FnTests {
         val overwrite = classNode<AnnotationFusing.FooTransplant>()
             .let { it.methods.first { f -> f.name == "b" } }
             .let { Transplant.Method("yolo", it, SimpleRemapper(mapOf())) }
-            .overwriteAnnotations()
+            .node.overwriteAnnotations
 
         assertTrue(overwrite)
     }

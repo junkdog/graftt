@@ -72,19 +72,14 @@ public interface AnnotationFusing {
 
     @Graft.Recipient(Foo.class)
     class FooTransplant {
-        @MyAnno
+        @MyAnnoRt(1)
         @Graft.Annotations(remove = {MyAnno.class, MyAnnoRt.class})
+        @Graft.Fuse
         public void a() {}
 
         @MyAnnoRt(1)
         @Graft.Annotations(overwrite = true)
+        @Graft.Fuse
         public void b() {}
-
-        public void c() {}
-
-        @MyAnno
-        public String aa;
-
-        public String bb;
     }
 }

@@ -68,6 +68,7 @@ fun ClassNode.fuse(transplant: Transplant.Method): Result<ClassNode, Msg> {
     // transplants aren't re-used once applied, but with regard
     // to the future, better safe than sorry
     return Ok(transplant.copy(node = transplant.node.copy()))
+        .andThen { removeAnnotations(it) }
         .andThen { fuseAnnotations(it) }
         .andThen(::substituteTransplants)
         .andThen(::updateOriginalMethod)
@@ -87,23 +88,22 @@ fun <T> MutableList<T>.copyIntoNullable(destination: KMutableProperty<MutableLis
     clear()
 }
 
-private fun ClassNode.fuseAnnotations(transplant: Transplant.Method): Result<Transplant.Method, Msg> {
-    val method = transplant.node
-    val original = methods.find { it.signatureEquals(method) }
+private fun ClassNode.removeAnnotations(transplant: Transplant.Field): Result<Transplant.Field, Msg> {
+    val original = transplant.findMatchingNode(this)
         ?: return Ok(transplant)
 
-    original.invisibleAnnotations?.copyIntoNullable(method::invisibleAnnotations)
-    original.visibleAnnotations?.copyIntoNullable(method::visibleAnnotations)
+    removeAnnotations(transplant.node.annotationsToRemove(),
+        original::invisibleAnnotations,
+        original::visibleAnnotations)
 
     return Ok(transplant)
 }
 
-private fun ClassNode.removeAnnotations(transplant: Transplant.Field): Result<Transplant.Field, Msg> {
-    val field = transplant.node
-    val original = fields.find { it.signatureEquals(field) }
+private fun ClassNode.removeAnnotations(transplant: Transplant.Method): Result<Transplant.Method, Msg> {
+    val original = transplant.findMatchingNode(this)
         ?: return Ok(transplant)
 
-    removeAnnotations(transplant.annotationsToRemove(),
+    removeAnnotations(transplant.node.annotationsToRemove(),
         original::invisibleAnnotations,
         original::visibleAnnotations)
 
@@ -122,9 +122,20 @@ private fun removeAnnotations(
     }
 }
 
+private fun ClassNode.fuseAnnotations(transplant: Transplant.Method): Result<Transplant.Method, Msg> {
+    val method = transplant.node
+    val original = transplant.findMatchingNode(this)
+        ?: return Ok(transplant)
+
+    original.invisibleAnnotations?.copyIntoNullable(method::invisibleAnnotations)
+    original.visibleAnnotations?.copyIntoNullable(method::visibleAnnotations)
+
+    return Ok(transplant)
+}
+
 private fun ClassNode.fuseAnnotations(transplant: Transplant.Field): Result<Transplant.Field, Msg> {
     val field = transplant.node
-    val original = fields.find { it.signatureEquals(field) }
+    val original = transplant.findMatchingNode(this)
         ?: return Ok(transplant)
 
     original.invisibleAnnotations?.copyIntoNullable(field::invisibleAnnotations)
@@ -148,41 +159,67 @@ private fun ClassNode.validateField(transplant: Transplant.Field): Result<Transp
     }
 }
 
-private fun ClassNode.validateAnnotations(transplant: Transplant.Field): Result<Transplant.Field, Msg> {
-    val field = transplant.node
-    val original = fields.find { it.signatureEquals(field) }
+private fun ClassNode.validateAnnotations(
+    transplant: Transplant.Field
+): Result<Transplant.Field, Msg> {
 
-    val toRemove = transplant.annotationsToRemove()
-    if (original == null) {
-        return if (toRemove.isEmpty())
+    return validateAnnotations(
+        transplant = transplant,
+        symbolName = transplant.node.name,
+        annotationsToRemove = transplant.node.annotationsToRemove(),
+        originalAnnotations = transplant.findMatchingNode(this)?.annotations() ?: listOf()
+    ).map { transplant }
+}
+
+private fun ClassNode.validateAnnotations(
+    transplant: Transplant.Method
+): Result<Transplant.Method, Msg> {
+
+    return validateAnnotations(
+        transplant = transplant,
+        symbolName = transplant.node.name,
+        annotationsToRemove = transplant.node.annotationsToRemove(),
+        originalAnnotations = transplant.findMatchingNode(this)?.annotations() ?: listOf()
+    ).map { transplant }
+}
+
+private fun <T> ClassNode.validateAnnotations(
+    transplant: Transplant<T>,
+    symbolName: String,
+    annotationsToRemove: Set<Type>,
+    originalAnnotations: List<AnnotationNode>
+): Result<Transplant<T>, Msg> {
+
+    // abort early if the method/field is new
+    transplant.findMatchingNode(this)
+        ?: return if (annotationsToRemove.isEmpty())
             Ok(transplant)
         else
-            Err(Msg.NoSuchAnnotation(toRemove.joinToString { it.className }))
-    }
+            Err(Msg.NoSuchAnnotation(annotationsToRemove.joinToString { it.className }))
 
-    val unableToRemove = toRemove - original.annotations().asTypes()
+    val unableToRemove = annotationsToRemove - originalAnnotations.asTypes()
     if (unableToRemove.isNotEmpty()) {
         return Err(Msg.UnableToRemoveAnnotation(
-            transplant.donor, field.name, unableToRemove.joinToString()))
+            transplant.donor, symbolName, unableToRemove.joinToString()))
     }
 
-    // check for clashes (TODO: extract?)
-    if (!transplant.overwriteAnnotations()) {
+    if (!transplant.overwriteAnnotations) {
         val clashing = transplant.annotations()
             .filterNot(AnnotationNode::isGraftAnnotation)
             .asTypes()
-            .intersect(original.annotations().asTypes() - toRemove)
+            .intersect(originalAnnotations.asTypes() - annotationsToRemove)
             .map { it.internalName }
 
         if (clashing.isNotEmpty()) {
             return Err(Msg.AnnotationAlreadyExists(
-                transplant.donor, transplant.node.name, clashing.joinToString())
+                transplant.donor, symbolName, clashing.joinToString())
             )
         }
     }
 
     return Ok(transplant)
 }
+
 
 private fun ClassNode.updateOriginalMethod(transplant: Transplant.Method): Result<Transplant.Method, Msg> {
     val method = transplant.node
@@ -208,11 +245,9 @@ private fun ClassNode.updateOriginalMethod(transplant: Transplant.Method): Resul
                 .onEach { it.name = original!!.name }
                 .count() == 0
 
-
             if (replacesOriginal)
                 methods.remove(original)
 
-            cleanAnnotations(transplant)
             Ok(transplant)
         }
     }
@@ -229,7 +264,7 @@ private fun substituteTransplants(transplant: Transplant.Method): Result<Transpl
     return Ok(transplant.copy(node = mn))
 }
 
-// TODO: test this
+// TODO: test this - or impl elsewhere (heh)?
 private fun substituteTransplants(transplant: Transplant.Field): Result<Transplant.Field, Msg> {
     val fn = transplant.node.copy()
     val remapper = transplant.transplantLookup
@@ -269,12 +304,14 @@ fun readRecipientType(donor: ClassNode): Result<Type, Msg> {
 
 /** rewrites this [ClassNode] according to [method] transplant */
 private fun ClassNode.graft(method: Transplant.Method): Result<ClassNode, Msg> {
+    method.node.invisibleAnnotations?.removeIf(AnnotationNode::isGraftAnnotation)
     methods.add(method.node)
     return Ok(this)
 }
 
 /** rewrites this [ClassNode] according to [field] transplant */
 private fun ClassNode.graft(field: Transplant.Field): Result<ClassNode, Msg> {
+    field.node.invisibleAnnotations?.removeIf(AnnotationNode::isGraftAnnotation)
     fields.removeIf { it.name == field.node.name }
     fields.add(field.node.copy())
     return Ok(this)
@@ -300,14 +337,6 @@ private fun verifyFieldNotInitialized(donor: ClassNode): (FieldNode) -> Result<F
         else
             Err(Msg.FieldDefaultValueNotSupported(donor.name, f.name))
     }
-}
-
-private fun cleanAnnotations(transplant: Transplant.Method) {
-    val mn = transplant.node
-    if (mn.invisibleAnnotations == null) return
-
-    mn.invisibleAnnotations = mn.invisibleAnnotations
-        .filterNot(AnnotationNode::isGraftAnnotation)
 }
 
 private val ctorOrStaticInit: (MethodNode) -> Boolean =
@@ -355,6 +384,7 @@ private class Surgery(val recipient: ClassNode, val remapper: Remapper) {
         return Ok(donor)
             .map(ClassNode::graftableMethods)
             .mapAll { fn -> Ok(Transplant.Method(donor.name, fn, remapper)) }
+            .mapAll { fn -> recipient.validateAnnotations(fn) }
             .mapAll { fn -> recipient.fuse(fn) }
             .map { donor }
     }
