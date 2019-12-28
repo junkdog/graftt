@@ -44,9 +44,9 @@ public final class Graft {
      * annotation is scoped to the immediate element it is decorating:
      * class, method or field.
      * <p/>
-     * All annotations from fused methods and added fields are copied
-     * over to the recipient by default. This annotation only needed for
-     * removing annotations, and enabling overwriting/updating annotations.
+     * All annotations are copied over to the recipient by default, excluding
+     * any graft annotations. This annotation is only needed for removing
+     * annotations and enabling overwriting annotations.
      */
     @Documented
     @Retention(CLASS)

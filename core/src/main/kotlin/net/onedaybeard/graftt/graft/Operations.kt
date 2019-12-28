@@ -110,6 +110,17 @@ private fun ClassNode.removeAnnotations(transplant: Transplant.Method): Result<T
     return Ok(transplant)
 }
 
+private fun ClassNode.removeAnnotations(transplant: Transplant.Class): Result<Transplant.Class, Msg> {
+    val original = transplant.findMatchingNode(this)
+        ?: return Ok(transplant)
+
+    removeAnnotations(transplant.node.annotationsToRemove(),
+        original::invisibleAnnotations,
+        original::visibleAnnotations)
+
+    return Ok(transplant)
+}
+
 private fun removeAnnotations(
     toRemove: Set<Type>,
     vararg sources: KMutableProperty<MutableList<AnnotationNode>?>
@@ -144,6 +155,22 @@ private fun ClassNode.fuseAnnotations(transplant: Transplant.Field): Result<Tran
     return Ok(transplant)
 }
 
+private fun ClassNode.fuseAnnotations(transplant: Transplant.Class): Result<Transplant.Class, Msg> {
+    val cls = transplant.node
+    val original = transplant.findMatchingNode(this)
+        ?: return Ok(transplant)
+
+    // NB: Transplant.Field and Transplant.Method copties from the original,
+    // but we can't do this for classes as we're mutating the instance directly
+    cls.invisibleAnnotations?.copyIntoNullable(original::invisibleAnnotations)
+    cls.visibleAnnotations?.copyIntoNullable(original::visibleAnnotations)
+
+    original.invisibleAnnotations
+        .removeIf(AnnotationNode::isGraftAnnotation)
+
+    return Ok(transplant)
+}
+
 
 private fun ClassNode.validateField(transplant: Transplant.Field): Result<Transplant.Field, Msg> {
     val field = transplant.node
@@ -166,6 +193,18 @@ private fun ClassNode.validateAnnotations(
     return validateAnnotations(
         transplant = transplant,
         symbolName = transplant.node.name,
+        annotationsToRemove = transplant.node.annotationsToRemove(),
+        originalAnnotations = transplant.findMatchingNode(this)?.annotations() ?: listOf()
+    ).map { transplant }
+}
+
+private fun ClassNode.validateAnnotations(
+    transplant: Transplant.Class
+): Result<Transplant.Class, Msg> {
+
+    return validateAnnotations(
+        transplant = transplant,
+        symbolName = transplant.node.shortName,
         annotationsToRemove = transplant.node.annotationsToRemove(),
         originalAnnotations = transplant.findMatchingNode(this)?.annotations() ?: listOf()
     ).map { transplant }
@@ -348,10 +387,19 @@ private val ctorOrStaticInit: (MethodNode) -> Boolean =
 private class Surgery(val recipient: ClassNode, val remapper: Remapper) {
 
     fun transplant(donor: ClassNode) = Ok(donor)
+        .andThen(::classAnnotations)
         .andThen(::interfaces)
         .andThen(::fields)
         .andThen(::methods)
         .map { recipient }
+
+    fun classAnnotations(donor: ClassNode): Result<ClassNode, Msg> {
+        return Ok(Transplant.Class(donor.name, donor, remapper))
+            .andThen { recipient.validateAnnotations(it) }
+            .andThen { recipient.removeAnnotations(it) }
+            .andThen { recipient.fuseAnnotations(it) }
+            .map { donor }
+    }
 
     fun interfaces(donor: ClassNode): Result<ClassNode, Msg> {
         fun checkRecipientInterface(iface: String) =

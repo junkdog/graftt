@@ -9,6 +9,17 @@ import kotlin.test.assertEquals
 class GraftAnnotationTests {
 
     @Test
+    fun `fuse annotations on method`() {
+        val mn = transplant<AnnotationFusing.BarTransplant>()
+            .map { cn -> cn.methods.first { it.name == "hmm" } }
+            .unwrap()
+
+        assertEquals(
+            setOf(type<AnnotationFusing.MyAnno>(), type<AnnotationFusing.MyAnnoRt>()),
+            mn.annotations().asTypes())
+    }
+
+    @Test
     fun `fuse annotations on fields`() {
         transplant<FusedField.FooTransplant>()
             .onFailure(`(╯°□°）╯︵ ┻━┻`)
@@ -26,32 +37,23 @@ class GraftAnnotationTests {
     }
 
     @Test
-    fun `fuse annotations on method`() {
-        val mn = transplant<AnnotationFusing.BarTransplant>()
-            .map { cn -> cn.methods.first { it.name == "hmm" } }
-            .unwrap()
-
-        assertEquals(
-            setOf(type<AnnotationFusing.MyAnno>(), type<AnnotationFusing.MyAnnoRt>()),
-            mn.annotations().asTypes())
-    }
-
-    @Test
     fun `fuse annotations on class`() {
-        TODO()
-    }
-
-    @Test
-    fun `remove annotation from class`() {
-        TODO()
+        transplant<FusedClass.FooTransplant>()
+            .onFailure(`(╯°□°）╯︵ ┻━┻`)
+            .map { it.annotations().asTypes() }
+            .onSuccess { annotations ->
+                assertEquals(
+                    setOf(type<FusedClass.AA>(), type<FusedClass.BB>()),
+                    annotations)
+            }
     }
 
     @Test
     fun `remove annotation from method`() {
         fun MethodNode.readMyAnnoRt(): Int? {
             return annotation<AnnotationFusing.MyAnnoRt>()
-                    .andThen { it.get<Int>("value") }
-                    .get()
+                .andThen { it.get<Int>("value") }
+                .get()
         }
 
         transplant<AnnotationFusing.FooTransplant>()
@@ -68,7 +70,6 @@ class GraftAnnotationTests {
                 assertEquals(
                     setOf(type<AnnotationFusing.MyAnnoRt>()),
                     funB.annotations().asTypes())
-
             }
     }
 
@@ -82,6 +83,14 @@ class GraftAnnotationTests {
                     setOf(),
                     f.annotations().asTypes())
             }
+    }
+
+    @Test
+    fun `remove annotation from class`() {
+        transplant<FusedClass.FooRemoverTransplant>()
+            .map { it.annotations().asTypes() }
+            .onFailure(`(╯°□°）╯︵ ┻━┻`)
+            .onSuccess { assertEquals(setOf(), it) }
     }
 
     @Test
@@ -104,11 +113,11 @@ class GraftAnnotationTests {
 
     @Test
     fun `detect annotation clash on class`() {
-        TODO()
-//        transplant<AnnotationFusing.ClashingClassTransplant>()
-//           .assertErr(Msg.AnnotationAlreadyExists(
-//               name = "net/onedaybeard/graftt/AnnotationFusing.ClashingClassTransplant",
-//               anno = "net/onedaybeard/graftt/AnnotationFusing.MyAnno",
-//               symbol = "ClashingClass"))
+        transplant<FusedClass.FooClashingTransplant>()
+            .assertErr(Msg.AnnotationAlreadyExists(
+                name = "net/onedaybeard/graftt/FusedClass\$FooClashingTransplant",
+                anno = "net/onedaybeard/graftt/FusedClass\$AA",
+                symbol = "FusedClass\$FooClashingTransplant"
+            ))
     }
 }
