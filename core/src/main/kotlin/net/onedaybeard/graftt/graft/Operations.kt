@@ -54,28 +54,6 @@ fun transplant(
         .andThen { recipient -> transplant(donor, recipient, remapper) }
 }
 
-/** apply [transplant] to this [ClassNode] */
-fun ClassNode.fuse(transplant: Transplant.Field): Result<ClassNode, Msg> {
-    return Ok(transplant)
-        .andThen { removeAnnotations(it) }
-        .andThen { fuseAnnotations(it) }
-        .andThen { graft(it) }
-}
-
-/** apply [transplant] to this [ClassNode] */
-fun ClassNode.fuse(transplant: Transplant.Method): Result<ClassNode, Msg> {
-
-    // transplants aren't re-used once applied, but with regard
-    // to the future, better safe than sorry
-    return Ok(transplant.copy(node = transplant.node.copy()))
-        .andThen { removeAnnotations(it) }
-        .andThen { fuseAnnotations(it) }
-        .andThen(::substituteTransplants)
-        .andThen(::updateOriginalMethod)
-        .andThen(::graft)
-}
-
-
 /**
  * Copies all elements from this list into [destination]. The destination list
  * is instantiated if it is `null`.
@@ -396,8 +374,8 @@ private class Surgery(val recipient: ClassNode, val remapper: Remapper) {
     fun classAnnotations(donor: ClassNode): Result<ClassNode, Msg> {
         return Ok(Transplant.Class(donor.name, donor, remapper))
             .andThen { recipient.validateAnnotations(it) }
-            .andThen { recipient.removeAnnotations(it) }
-            .andThen { recipient.fuseAnnotations(it) }
+            .andThen(recipient::removeAnnotations)
+            .andThen(recipient::fuseAnnotations)
             .map { donor }
     }
 
@@ -424,7 +402,9 @@ private class Surgery(val recipient: ClassNode, val remapper: Remapper) {
             .mapAll(recipient::validateField)
             .mapAll(recipient::validateAnnotations)
             .mapAll { t -> Ok(t.copy(donor = remapper.mapType(donor.name))) }
-            .mapAll(recipient::fuse)
+            .mapAll(recipient::removeAnnotations)
+            .mapAll(recipient::fuseAnnotations)
+            .mapAll(recipient::graft)
             .map { donor }
     }
 
@@ -433,7 +413,11 @@ private class Surgery(val recipient: ClassNode, val remapper: Remapper) {
             .map(ClassNode::graftableMethods)
             .mapAll { fn -> Ok(Transplant.Method(donor.name, fn, remapper)) }
             .mapAll { fn -> recipient.validateAnnotations(fn) }
-            .mapAll { fn -> recipient.fuse(fn) }
+            .mapAll(recipient::removeAnnotations)
+            .mapAll(recipient::fuseAnnotations)
+            .mapAll(::substituteTransplants)
+            .mapAll(recipient::updateOriginalMethod)
+            .mapAll(recipient::graft)
             .map { donor }
     }
 }
