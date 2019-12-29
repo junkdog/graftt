@@ -34,7 +34,7 @@ fun transplant(
     if (donor.superName != "java/lang/Object")
         return Err(Msg.TransplantMustNotExtendClass(donor.name))
 
-    return Ok(donor)
+    return Ok(donor.copy())
         .andThen(Surgery(recipient, remapper)::transplant)
         .andThen(::verify)
 }
