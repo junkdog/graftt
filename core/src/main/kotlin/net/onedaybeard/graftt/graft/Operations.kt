@@ -64,7 +64,6 @@ fun <T> MutableList<T>.copyIntoNullable(destination: KMutableProperty<MutableLis
         destination.setter.call(ArrayList<T>())
 
     destination.getter.call()!!.addAll(this)
-    clear()
 }
 
 private fun ClassNode.removeAnnotations(transplant: Transplant.Field): Result<Transplant.Field, Msg> {
@@ -116,8 +115,6 @@ private fun ClassNode.fuseAnnotations(transplant: Transplant.Method): Result<Tra
     val method = transplant.node
     val original = transplant.findMatchingNode(this)
         ?: return Ok(transplant)
-
-
 
     original.invisibleAnnotations?.copyIntoNullable(method::invisibleAnnotations)
     original.visibleAnnotations?.copyIntoNullable(method::visibleAnnotations)
@@ -284,6 +281,7 @@ private fun substituteTransplants(transplant: Transplant.Method): Result<Transpl
     return Ok(transplant.copy(node = mn))
 }
 
+/** update references to transplants in annotations */
 private fun <T : Transplant<*>> substituteAnnotations(transplant: T): Result<T, Msg> {
     val remapper = transplant.transplantLookup
 
