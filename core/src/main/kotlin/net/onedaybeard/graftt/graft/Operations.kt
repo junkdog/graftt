@@ -5,6 +5,7 @@ import net.onedaybeard.graftt.*
 import net.onedaybeard.graftt.asm.*
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type
+import org.objectweb.asm.commons.AnnotationRemapper
 import org.objectweb.asm.commons.MethodRemapper
 import org.objectweb.asm.commons.Remapper
 import org.objectweb.asm.tree.*
@@ -115,6 +116,8 @@ private fun ClassNode.fuseAnnotations(transplant: Transplant.Method): Result<Tra
     val method = transplant.node
     val original = transplant.findMatchingNode(this)
         ?: return Ok(transplant)
+
+
 
     original.invisibleAnnotations?.copyIntoNullable(method::invisibleAnnotations)
     original.visibleAnnotations?.copyIntoNullable(method::visibleAnnotations)
@@ -281,6 +284,20 @@ private fun substituteTransplants(transplant: Transplant.Method): Result<Transpl
     return Ok(transplant.copy(node = mn))
 }
 
+private fun <T : Transplant<*>> substituteAnnotations(transplant: T): Result<T, Msg> {
+    val remapper = transplant.transplantLookup
+
+    transplant.annotations()
+        .filterNot(AnnotationNode::isGraftAnnotation)
+        .forEach { an ->
+            val updated = AnnotationNode(an.desc)
+            an.accept(AnnotationRemapper(updated, remapper))
+            an.values = updated.values
+        }
+
+    return Ok(transplant)
+}
+
 // TODO: test this - or impl elsewhere (heh)?
 private fun substituteTransplants(transplant: Transplant.Field): Result<Transplant.Field, Msg> {
     val fn = transplant.node.copy()
@@ -373,9 +390,10 @@ private class Surgery(val recipient: ClassNode, val remapper: Remapper) {
 
     fun classAnnotations(donor: ClassNode): Result<ClassNode, Msg> {
         return Ok(Transplant.Class(donor.name, donor, remapper))
+            .andThen { substituteAnnotations(it) }
             .andThen { recipient.validateAnnotations(it) }
             .andThen(recipient::removeAnnotations)
-            .andThen(recipient::fuseAnnotations)
+            .andThen { recipient.fuseAnnotations(it) }
             .map { donor }
     }
 
@@ -400,6 +418,7 @@ private class Surgery(val recipient: ClassNode, val remapper: Remapper) {
             .mapAll(verifyFieldNotInitialized(donor))
             .mapAll { f -> Ok(Transplant.Field(donor.name, f, remapper)) }
             .mapAll(recipient::validateField)
+            .mapAll { substituteAnnotations(it) }
             .mapAll(recipient::validateAnnotations)
             .mapAll { t -> Ok(t.copy(donor = remapper.mapType(donor.name))) }
             .mapAll(recipient::removeAnnotations)
@@ -412,6 +431,7 @@ private class Surgery(val recipient: ClassNode, val remapper: Remapper) {
         return Ok(donor)
             .map(ClassNode::graftableMethods)
             .mapAll { fn -> Ok(Transplant.Method(donor.name, fn, remapper)) }
+            .mapAll { substituteAnnotations(it) }
             .mapAll { fn -> recipient.validateAnnotations(fn) }
             .mapAll(recipient::removeAnnotations)
             .mapAll(recipient::fuseAnnotations)

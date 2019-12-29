@@ -109,7 +109,6 @@ Nice to have, but not now:
 ## Caveats
 - You're working against internal implementation; there are no semver guarantees
 - No rewiring of parent type on target class
-- Annotations aren't fused (is there a use-case?)
 - No `@Graft.Fuse` for constructors; nice to have, but not initially
 - No GWT support
 - No android support (possible with a custom gradle task)

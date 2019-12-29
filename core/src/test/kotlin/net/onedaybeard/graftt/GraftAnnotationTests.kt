@@ -2,6 +2,7 @@ package net.onedaybeard.graftt
 
 import com.github.michaelbull.result.*
 import net.onedaybeard.graftt.asm.*
+import net.onedaybeard.graftt.graft.TypeList
 import org.junit.Test
 import org.objectweb.asm.tree.MethodNode
 import kotlin.test.assertEquals
@@ -119,5 +120,21 @@ class GraftAnnotationTests {
                 anno = "net/onedaybeard/graftt/FusedClass\$AA",
                 symbol = "FusedClass\$FooClashingTransplant"
             ))
+    }
+
+    @Test
+    fun `annotations referring to transplants are substituted`() {
+        val (_, foo) = transplantsOf(
+            SubstituteAnnoValues.BarTransplant::class,
+            SubstituteAnnoValues.FooTransplant::class)
+
+        foo.annotation<SubstituteAnnoValues.AA>()
+            .andThen { it.get<TypeList>("value") }
+            .onFailure(`(╯°□°）╯︵ ┻━┻`)
+            .onSuccess { annos ->
+                assertEquals(
+                    listOf(type<SubstituteAnnoValues.Bar>()),
+                    annos)
+            }
     }
 }
