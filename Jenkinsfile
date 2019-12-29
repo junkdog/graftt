@@ -25,7 +25,7 @@ pipeline {
         }
         stage ('Build and Test') {
             steps {
-                sh 'mvn integration-test -B'
+                sh 'mvn clean integration-test -B'
             }
             post {
                 always {
@@ -39,7 +39,7 @@ pipeline {
                 not { triggeredBy "TimerTrigger" }
             }
             steps {
-                sh 'mvn install -DskipTests -B'
+                sh 'mvn clean install -DskipTests -B'
             }
         }
         stage('Deploy') {
@@ -50,7 +50,7 @@ pipeline {
                 }
             }
             steps {
-                sh 'mvn deploy -DskipTests -B'
+                sh 'mvn clean deploy -DskipTests -B'
             }
         }
     }
