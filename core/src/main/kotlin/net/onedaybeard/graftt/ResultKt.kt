@@ -11,18 +11,6 @@ fun <T> resultOf(f: () -> T): Result<T, Msg> {
     }
 }
 
-/**
- * Creates a [Result] from [f]. To chain with other related results,
- * [require] the successful completion of previous results; any error
- * [Msg]:s propagate to this result.
- */
-fun <T> resultOf(vararg require: Result<*, Msg>, f: () -> T): Result<T, Msg> {
-    return when (val e = require.find { it is Err<Msg> }) {
-        null -> resultOf(f)
-        else -> Err(e.unwrapError())
-    }
-}
-
 /** Transforms [Msg] unless it is [Msg.Error] */
 fun <T> Result<T, Msg>.mapSafeError(f: (Msg) -> Msg): Result<T, Msg> {
     return when (val e = getError()) {
@@ -33,7 +21,7 @@ fun <T> Result<T, Msg>.mapSafeError(f: (Msg) -> Msg): Result<T, Msg> {
 }
 
 @Suppress("UNCHECKED_CAST")
-/** Transforms [Msg] unless it is [Msg.None] */
+/** Transforms [Msg] unless it is [Msg.None] or [Msg.NoSuchAnnotation] */
 fun <T> Result<T, Msg>.safeRecover(f: (Msg) -> T): Result<T, Msg> {
     return when (val e = getError()) {
         null                    -> this
@@ -41,14 +29,4 @@ fun <T> Result<T, Msg>.safeRecover(f: (Msg) -> T): Result<T, Msg> {
         is Msg.NoSuchAnnotation -> Ok(f(e))
         else                    -> this
     }
-}
-
-/** Lazily chains multiple [Result]s into a list of all values or [Err] */
-fun <V, E> combine(vararg results: () -> Result<V, E>): Result<List<V>, E> {
-    return Ok(results.map { f ->
-        when (val result = f()) {
-            is Ok  -> result.value
-            is Err -> return result
-        }
-    })
 }

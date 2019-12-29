@@ -95,7 +95,7 @@ class GrafttMojo : AbstractMojo() {
     }
 
     private fun transplant(donor: ClassNode, remapper: Remapper) {
-        transplant(donor, this::loadClassNode, remapper)
+        transplant(donor, ::loadClassNode, remapper)
             .andThen(::save)
             .onFailure(`(╯°□°）╯︵ ┻━┻`)
     }
@@ -143,7 +143,7 @@ class GrafttMojo : AbstractMojo() {
         log.info("-".repeat(LINE_WIDTH))
         log.info(header("TRANSPLANTS"))
         donated
-            .map { cn -> cn to readRecipientType(cn).andThen(this::loadClassNode).unwrap() }
+            .map { cn -> cn to readRecipientType(cn).andThen(::loadClassNode).unwrap() }
             .map { (d, r) -> format(d.shortName to r.shortName) }
             .forEach(log::info)
         log.info("-".repeat(LINE_WIDTH))
