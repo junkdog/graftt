@@ -4,7 +4,6 @@ import com.github.michaelbull.result.*
 import org.junit.Test
 import kotlin.test.assertEquals
 
-
 class GraftTests {
 
     @Test
@@ -207,5 +206,14 @@ class GraftTests {
             .assertErr(Msg.WrongFuseSignature(
                 "net/onedaybeard/graftt/SingleClassWrongFuseTransplant",
                 "yolo"))
+    }
+
+    @Test
+    fun `fail when fused field signature is wrong`() {
+        transplant<FusedField.FooWrongSigTransplant>()
+            .assertErr(Msg.WrongFuseSignature(
+                name = "net/onedaybeard/graftt/FusedField\$FooWrongSigTransplant",
+                symbol = "ohNo"
+            ))
     }
 }

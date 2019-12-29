@@ -14,11 +14,15 @@ sealed class Msg {
 
     object None : Msg()
     data class NoSuchKey(val key: String) : Msg()
+    data class NoSuchAnnotation(val key: String) : Msg()
+
+    data class AnnotationAlreadyExists(val name: String, val symbol: String, val anno: String) : Msg()
+    data class UnableToRemoveAnnotation(val name: String, val symbol: String, val anno: String) : Msg()
 
     data class FieldAlreadyExists(val name: String, val field: String) : Msg()
     data class InterfaceAlreadyExists(val name: String, val iface: String) : Msg()
     data class MethodAlreadyExists(val name: String, val method: String) : Msg()
-    data class WrongFuseSignature(val name: String, val method: String) : Msg()
+    data class WrongFuseSignature(val name: String, val symbol: String) : Msg()
 
     data class TransplantMustNotExtendClass(val name: String) : Msg()
     data class FieldDefaultValueNotSupported(val name: String, val field: String) : Msg()

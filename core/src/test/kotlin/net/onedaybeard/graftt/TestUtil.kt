@@ -1,6 +1,10 @@
 package net.onedaybeard.graftt
 
 import com.github.michaelbull.result.*
+import net.onedaybeard.graftt.asm.classNode
+import net.onedaybeard.graftt.asm.internalName
+import net.onedaybeard.graftt.asm.qualifiedName
+import net.onedaybeard.graftt.asm.toBytes
 import net.onedaybeard.graftt.graft.readRecipientType
 import net.onedaybeard.graftt.graft.transplant
 import org.objectweb.asm.Type
@@ -33,8 +37,7 @@ fun transplant(donor: ClassNode, remapper: Remapper? = null): Result<ClassNode, 
     val remapping = remapper
         ?: SimpleRemapper(donor.name, readRecipientType(donor).unwrap().internalName)
 
-    return Ok(donor)
-        .andThen { donor -> transplant(donor, ::loadClassNode, remapping) }
+    return transplant(donor, ::loadClassNode, remapping)
 }
 
 

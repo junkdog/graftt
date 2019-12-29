@@ -16,7 +16,7 @@ public final class Graft {
     /** Specifies the receiver of the transplant */
     @Documented
     @Retention(CLASS)
-    @java.lang.annotation.Target(TYPE)
+    @Target(TYPE)
     public @interface Recipient { Class<?> value(); }
 
     /**
@@ -26,7 +26,7 @@ public final class Graft {
      */
     @Documented
     @Retention(CLASS)
-    @java.lang.annotation.Target({FIELD, METHOD})
+    @Target({FIELD, METHOD})
     public @interface Mock {}
 
     /**
@@ -36,6 +36,23 @@ public final class Graft {
      */
     @Documented
     @Retention(CLASS)
-    @java.lang.annotation.Target(METHOD)
+    @Target({METHOD, FIELD})
     public @interface Fuse {}
+
+    /**
+     * Specifies how to deal with annotations on recipient class. This
+     * annotation is scoped to the immediate element it is decorating:
+     * class, method or field.
+     * <p/>
+     * All annotations are copied over to the recipient by default, excluding
+     * any graft annotations. This annotation is only needed for removing
+     * annotations and enabling overwriting annotations.
+     */
+    @Documented
+    @Retention(CLASS)
+    @Target({TYPE, FIELD, METHOD})
+    public @interface Annotations {
+        Class<? extends Annotation>[] remove() default {};
+        boolean overwrite() default false;
+    }
 }

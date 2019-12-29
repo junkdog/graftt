@@ -2,6 +2,8 @@ package net.onedaybeard.graftt.agent
 
 import com.github.michaelbull.result.*
 import net.onedaybeard.graftt.*
+import net.onedaybeard.graftt.asm.classNode
+import net.onedaybeard.graftt.asm.toBytes
 import net.onedaybeard.graftt.graft.isTransplant
 import net.onedaybeard.graftt.graft.transplant
 import net.onedaybeard.graftt.graft.readRecipientType
@@ -28,7 +30,7 @@ fun premain(agentArgs: String?, inst: Instrumentation) {
                 .also(::validate)
                 .let { args -> args["classpath"] ?: args["cp"] ?: listOf() }
                 .map(::File)
-                .forEach(this::register)
+                .forEach(::register)
         }
 
         fun register(root: File) {
@@ -72,7 +74,7 @@ fun premain(agentArgs: String?, inst: Instrumentation) {
                     .mapError(Msg::toException)
                     .onFailure { log.error(it) { "failed transplant: ${donor.name} -> $className" } }
                     .onSuccess { log.info { "transplant complete: ${donor.name} -> $className" } }
-                    .fold(success = { it }, failure = { null })
+                    .get()
             } ?: classfileBuffer
         }
     })
@@ -89,6 +91,7 @@ private fun validate(args: Map<String, List<String>>) {
         throw IllegalArgumentException("$valid are valid parameters, found: ${invalid.keys}")
 }
 
+/** argument format: `param1=value1,value2;param2=value3` */
 private fun parseArgs(rawArgs: String?): Map<String, List<String>> {
     if (rawArgs == null) return mapOf()
 
