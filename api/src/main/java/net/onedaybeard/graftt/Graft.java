@@ -52,7 +52,21 @@ public final class Graft {
     @Retention(CLASS)
     @Target({TYPE, FIELD, METHOD})
     public @interface Annotations {
+
+        /**
+         * Indicates which annotations to remove from the recipient.
+         *
+         * @return Annotation to remove
+         */
         Class<? extends Annotation>[] remove() default {};
+
+
+        /**
+         * Indicates whether annotations that exist on both the transplant
+         * and recipient should be overwritten.
+         *
+         * @return true if annotations should be overwritten
+         */
         boolean overwrite() default false;
     }
 }

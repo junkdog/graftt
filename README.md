@@ -2,10 +2,11 @@
 
 Rewrite existing classes by grafting bytecode from *Transplant* classes. Transplants are
 plain java classes and function like templates or blueprints; annotations define interactions
-with the recipient class. The entire API consists of 3 annotations.
+with the recipient class. The entire API consists of 4 primary annotations.
 
 Transplants have complete access to the recipient class: Existing methods can be wrapped,
 changed or replaced entirely. Interfaces can be retrofitted and additional fields added.
+Update annotations on classes, methods and fields.
  
 An agent (`java -javaagent`) applies transplants at load-time. Alternatively, 
 `graftt-maven-plugin` finds and applies transplants within `target/classes`.  
@@ -100,6 +101,9 @@ public class SomeClass {
   call to `bar()` inside the transplant will point to `Foo::bar$original` once applied.
 - **`@Graft.Mock`** to keep the compiler happy when you need to reference fields or
   methods in the target class. Mocked references point to target class after transplant.
+- **`@Graft.Annotations`** configures removal and updating of annotations. The default
+  behavior copies all annotations from the transplant class and its symbol over to the
+  recipient.  
 - Any non-annotated methods or fields are copied over as-is.
 - All interfaces are copied over to recipient.
 

@@ -1,6 +1,10 @@
 package net.onedaybeard.graftt
 
 import com.github.michaelbull.result.*
+import net.onedaybeard.graftt.asm.classNode
+import net.onedaybeard.graftt.asm.toBytes
+import net.onedaybeard.graftt.graft.readRecipientType
+import org.junit.Assert
 import org.junit.Test
 import kotlin.test.assertEquals
 
@@ -12,7 +16,7 @@ class GraftTests {
             TransplantSubstitution.BarTransplant::class,
             TransplantSubstitution.FooTransplant::class)
 
-        instantiate(bar, foo) { (bar, foo) ->
+        instantiate(bar, foo) { (_, foo) ->
             foo.invokeMethod<Unit>("init")
             foo.invokeMethod<Unit>("checkBars")
         }
@@ -24,7 +28,7 @@ class GraftTests {
             MockedFieldOfTransplant.OriginalTransplant::class,
             MockedFieldOfTransplant.FooTransplant::class)
 
-        instantiate(mocked, foo) { (mocked, foo) ->
+        instantiate(mocked, foo) { (_, foo) ->
             val result = foo.invokeMethod<String>("doIt", listOf("String"))
             assertEquals("String: true", result)
         }
@@ -215,5 +219,18 @@ class GraftTests {
                 name = "net/onedaybeard/graftt/FusedField\$FooWrongSigTransplant",
                 symbol = "ohNo"
             ))
+    }
+
+    @Test
+    fun `donor is unchanged by surgery`() {
+        val donor = classNode<AnnotationFusing.BarTransplant>()
+        transplant(donor)
+            .and { readRecipientType(donor) }
+            .onFailure(`(╯°□°）╯︵ ┻━┻`)
+            .onSuccess {
+                Assert.assertArrayEquals(
+                    classNode<AnnotationFusing.BarTransplant>().toBytes(),
+                    donor.toBytes())
+            }
     }
 }

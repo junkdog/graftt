@@ -3,21 +3,11 @@ package net.onedaybeard.graftt
 import com.github.michaelbull.result.*
 import net.onedaybeard.graftt.asm.*
 import net.onedaybeard.graftt.graft.TypeList
-import net.onedaybeard.graftt.graft.readRecipientType
 import org.junit.Test
 import org.objectweb.asm.tree.MethodNode
 import kotlin.test.assertEquals
 
 class GraftAnnotationTests {
-    @Test
-    fun `transplant is unchanged by surgery`() {
-        val donor = classNode<AnnotationFusing.BarTransplant>()
-        transplant(donor)
-            .and { readRecipientType(donor) }
-            .onFailure(`(╯°□°）╯︵ ┻━┻`)
-            .onSuccess { assertEquals(type<AnnotationFusing.Bar>(), it) }
-    }
-
     @Test
     fun `fuse annotations on method`() {
         val mn = transplant<AnnotationFusing.BarTransplant>()
@@ -140,10 +130,9 @@ class GraftAnnotationTests {
         foo.annotation<SubstituteAnnoValues.AA>()
             .andThen { it.get<TypeList>("value") }
             .onFailure(`(╯°□°）╯︵ ┻━┻`)
-            .onSuccess { annos ->
-                assertEquals(
-                    listOf(type<SubstituteAnnoValues.Bar>()),
-                    annos)
+            .onSuccess { assertEquals(
+                expected = listOf(type<SubstituteAnnoValues.Bar>()),
+                actual = it)
             }
     }
 }

@@ -149,7 +149,6 @@ private fun ClassNode.fuseAnnotations(transplant: Transplant.Class): Result<Tran
     return Ok(transplant)
 }
 
-
 private fun ClassNode.validateField(transplant: Transplant.Field): Result<Transplant.Field, Msg> {
     val field = transplant.node
     val original = fields.find { it.signatureEquals(field) }
@@ -200,6 +199,7 @@ private fun ClassNode.validateAnnotations(
     ).map { transplant }
 }
 
+/** ensure annotations on [transplant] don't clash with [originalAnnotations]  */
 private fun <T> ClassNode.validateAnnotations(
     transplant: Transplant<T>,
     symbolName: String,
@@ -281,6 +281,17 @@ private fun substituteTransplants(transplant: Transplant.Method): Result<Transpl
     return Ok(transplant.copy(node = mn))
 }
 
+// TODO: test this - or impl elsewhere (heh)?
+private fun substituteTransplants(transplant: Transplant.Field): Result<Transplant.Field, Msg> {
+    val fn = transplant.node.copy()
+    val remapper = transplant.transplantLookup
+
+    fn.signature = remapper.mapSignature(fn.signature, true)
+    fn.desc = remapper.mapDesc(fn.desc)
+
+    return Ok(transplant.copy(node = fn))
+}
+
 /** update references to transplants in annotations */
 private fun <T : Transplant<*>> substituteAnnotations(transplant: T): Result<T, Msg> {
     val remapper = transplant.transplantLookup
@@ -295,18 +306,6 @@ private fun <T : Transplant<*>> substituteAnnotations(transplant: T): Result<T, 
 
     return Ok(transplant)
 }
-
-// TODO: test this - or impl elsewhere (heh)?
-private fun substituteTransplants(transplant: Transplant.Field): Result<Transplant.Field, Msg> {
-    val fn = transplant.node.copy()
-    val remapper = transplant.transplantLookup
-
-    fn.signature = remapper.mapSignature(fn.signature, true)
-    fn.desc = remapper.mapDesc(fn.desc)
-
-    return Ok(transplant.copy(node = fn))
-}
-
 
 /** all methods except mocked, constructor and static initializer */
 fun ClassNode.graftableMethods() = methods
