@@ -25,7 +25,7 @@ fun FieldNode.annotationsToRemove(): Set<Type> =
 private fun annotationsToRemove(node: Result<AnnotationNode, Msg>): Set<Type> {
     return node
         .andThen { it.get<TypeList>("remove") }
-        .map { it.toSet() }
+        .map(Iterable<Type>::toSet)
         .get() ?: setOf()
 }
 
