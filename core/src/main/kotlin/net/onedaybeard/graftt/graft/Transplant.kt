@@ -44,13 +44,12 @@ sealed class Transplant<T> {
         get() = annotations().read(Graft.Annotations::overwrite).get() ?: false
 
     /**
-     * Returns the types declared in [Graft.Annotations.remove] and all
-     * annotations decorating the transplant if [Graft.Annotations.overwrite]
-     * is set. If the annotation isn't present, an empty list is returned.
-     *
-     * returns types to remove from recipient
+     * Returns types to remove from recipient. These are comprised of the types
+     * declared in [Graft.Annotations.remove] and all annotations decorating
+     * the transplant if [Graft.Annotations.overwrite] is set. If the annotation
+     * isn't present, an empty list is returned.
      */
-    fun  annotationsToRemove(): List<Type> {
+    fun annotationsToRemove(): List<Type> {
         val explicitRemovals: List<Type> = annotations()
             .readTypes(Graft.Annotations::remove)
             .get() ?: listOf()
