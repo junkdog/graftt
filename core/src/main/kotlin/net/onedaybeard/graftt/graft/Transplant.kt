@@ -1,5 +1,7 @@
 package net.onedaybeard.graftt.graft
 
+import com.github.michaelbull.result.get
+import net.onedaybeard.graftt.Graft
 import net.onedaybeard.graftt.asm.*
 import org.objectweb.asm.commons.Remapper
 import org.objectweb.asm.tree.AnnotationNode
@@ -38,11 +40,11 @@ sealed class Transplant<T> {
     }
 
     val overwriteAnnotations: Boolean
-        get() = when (this) {
-            is Field  -> node.overwriteAnnotations
-            is Method -> node.overwriteAnnotations
-            is Class  -> node.overwriteAnnotations
-        }
+        get() = annotations().read(Graft.Annotations::overwrite).get() ?: false
+
+    /** returns types declared in [Graft.Annotations.remove] or an empty list */
+    fun annotationsToRemove(): TypeList =
+        annotations().readTypes(Graft.Annotations::remove).get() ?: TypeList()
 
     @Suppress("IMPLICIT_CAST_TO_ANY", "UNCHECKED_CAST")
     fun findMatchingNode(other: ClassNode): T? = when (this) {

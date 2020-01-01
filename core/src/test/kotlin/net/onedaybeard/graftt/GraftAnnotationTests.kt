@@ -3,6 +3,7 @@ package net.onedaybeard.graftt
 import com.github.michaelbull.result.*
 import net.onedaybeard.graftt.asm.*
 import net.onedaybeard.graftt.graft.TypeList
+import net.onedaybeard.graftt.graft.read
 import org.junit.Test
 import org.objectweb.asm.tree.MethodNode
 import kotlin.test.assertEquals
@@ -51,8 +52,8 @@ class GraftAnnotationTests {
     @Test
     fun `remove annotation from method`() {
         fun MethodNode.readMyAnnoRt(): Int? {
-            return annotation<AnnotationFusing.MyAnnoRt>()
-                .andThen { it.get<Int>("value") }
+            return annotations()
+                .read(AnnotationFusing.MyAnnoRt::value)
                 .get()
         }
 

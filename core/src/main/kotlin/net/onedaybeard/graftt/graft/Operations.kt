@@ -70,7 +70,7 @@ private fun ClassNode.removeAnnotations(transplant: Transplant.Field): Result<Tr
     val original = transplant.findMatchingNode(this)
         ?: return Ok(transplant)
 
-    removeAnnotations(transplant.node.annotationsToRemove(),
+    removeAnnotations(transplant.annotationsToRemove(),
         original::invisibleAnnotations,
         original::visibleAnnotations)
 
@@ -81,7 +81,7 @@ private fun ClassNode.removeAnnotations(transplant: Transplant.Method): Result<T
     val original = transplant.findMatchingNode(this)
         ?: return Ok(transplant)
 
-    removeAnnotations(transplant.node.annotationsToRemove(),
+    removeAnnotations(transplant.annotationsToRemove(),
         original::invisibleAnnotations,
         original::visibleAnnotations)
 
@@ -92,7 +92,7 @@ private fun ClassNode.removeAnnotations(transplant: Transplant.Class): Result<Tr
     val original = transplant.findMatchingNode(this)
         ?: return Ok(transplant)
 
-    removeAnnotations(transplant.node.annotationsToRemove(),
+    removeAnnotations(transplant.annotationsToRemove(),
         original::invisibleAnnotations,
         original::visibleAnnotations)
 
@@ -100,7 +100,7 @@ private fun ClassNode.removeAnnotations(transplant: Transplant.Class): Result<Tr
 }
 
 private fun removeAnnotations(
-    toRemove: Set<Type>,
+    toRemove: Iterable<Type>,
     vararg sources: KMutableProperty<MutableList<AnnotationNode>?>
 ) {
     sources.forEach { source ->
@@ -170,7 +170,7 @@ private fun ClassNode.validateAnnotations(
     return validateAnnotations(
         transplant = transplant,
         symbolName = transplant.node.name,
-        annotationsToRemove = transplant.node.annotationsToRemove(),
+        annotationsToRemove = transplant.annotationsToRemove(),
         originalAnnotations = transplant.findMatchingNode(this)?.annotations() ?: listOf()
     ).map { transplant }
 }
@@ -182,7 +182,7 @@ private fun ClassNode.validateAnnotations(
     return validateAnnotations(
         transplant = transplant,
         symbolName = transplant.node.shortName,
-        annotationsToRemove = transplant.node.annotationsToRemove(),
+        annotationsToRemove = transplant.annotationsToRemove(),
         originalAnnotations = transplant.findMatchingNode(this)?.annotations() ?: listOf()
     ).map { transplant }
 }
@@ -194,7 +194,7 @@ private fun ClassNode.validateAnnotations(
     return validateAnnotations(
         transplant = transplant,
         symbolName = transplant.node.name,
-        annotationsToRemove = transplant.node.annotationsToRemove(),
+        annotationsToRemove = transplant.annotationsToRemove(),
         originalAnnotations = transplant.findMatchingNode(this)?.annotations() ?: listOf()
     ).map { transplant }
 }
@@ -203,13 +203,13 @@ private fun ClassNode.validateAnnotations(
 private fun <T> ClassNode.validateAnnotations(
     transplant: Transplant<T>,
     symbolName: String,
-    annotationsToRemove: Set<Type>,
+    annotationsToRemove: Iterable<Type>,
     originalAnnotations: List<AnnotationNode>
 ): Result<Transplant<T>, Msg> {
 
     // abort early if the method/field is new
     transplant.findMatchingNode(this)
-        ?: return if (annotationsToRemove.isEmpty())
+        ?: return if (annotationsToRemove.none())
             Ok(transplant)
         else
             Err(Msg.NoSuchAnnotation(annotationsToRemove.joinToString { it.className }))
@@ -328,8 +328,7 @@ fun AnnotationNode.isGraftAnnotation() =
 fun readRecipientType(donor: ClassNode): Result<Type, Msg> {
     return donor
         .invisibleAnnotations.toResultOr { Msg.None }
-        .andThen { it.findAnnotation<Graft.Recipient>() }
-        .andThen { it.get<Type>("value") }
+        .andThen { it.readType(Graft.Recipient::value) }
         .mapSafeError { Msg.MissingGraftTargetAnnotation(donor.name) }
 }
 

@@ -2,8 +2,7 @@ package net.onedaybeard.graftt
 
 import net.onedaybeard.graftt.asm.*
 import net.onedaybeard.graftt.graft.Transplant
-import net.onedaybeard.graftt.graft.annotationsToRemove
-import net.onedaybeard.graftt.graft.overwriteAnnotations
+import net.onedaybeard.graftt.graft.graftableMethods
 import org.junit.Test
 import org.objectweb.asm.commons.SimpleRemapper
 import kotlin.test.assertEquals
@@ -14,7 +13,9 @@ class AnnotationTests {
     @Test
     fun `read types from Graft|@Annotations#remove`() {
         val types = classNode<AnnotationFusing.FooTransplant>()
-            .let { it.methods.first { f -> f.name == "a" } }
+            .graftableMethods()
+            .first { it.name == "a" }
+            .let { Transplant.Method("", it, SimpleRemapper(mapOf())) }
             .annotationsToRemove()
 
         assertEquals(
@@ -25,9 +26,10 @@ class AnnotationTests {
     @Test
     fun `check transplant overwriteAnnotations`() {
         val overwrite = classNode<AnnotationFusing.FooTransplant>()
-            .let { it.methods.first { f -> f.name == "b" } }
-            .let { Transplant.Method("yolo", it, SimpleRemapper(mapOf())) }
-            .node.overwriteAnnotations
+            .graftableMethods()
+            .first { it.name == "b" }
+            .let { Transplant.Method("", it, SimpleRemapper(mapOf())) }
+            .overwriteAnnotations
 
         assertTrue(overwrite)
     }

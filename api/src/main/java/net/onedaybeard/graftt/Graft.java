@@ -56,7 +56,7 @@ public final class Graft {
         /**
          * Indicates which annotations to remove from the recipient.
          *
-         * @return Annotation to remove
+         * @return Annotations to remove
          */
         Class<? extends Annotation>[] remove() default {};
 

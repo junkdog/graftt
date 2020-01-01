@@ -1,41 +1,31 @@
 package net.onedaybeard.graftt.graft
 
 import com.github.michaelbull.result.*
-import net.onedaybeard.graftt.Graft
 import net.onedaybeard.graftt.Msg
-import net.onedaybeard.graftt.asm.annotation
-import net.onedaybeard.graftt.asm.get
+import net.onedaybeard.graftt.asm.*
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.AnnotationNode
-import org.objectweb.asm.tree.ClassNode
-import org.objectweb.asm.tree.FieldNode
-import org.objectweb.asm.tree.MethodNode
+import kotlin.reflect.KClass
+import kotlin.reflect.KProperty1
 
 internal typealias TypeList = java.util.ArrayList<Type>
 
 
-/** returns types declared in [Graft.Annotations.remove] or an empty set if not present */
-fun ClassNode.annotationsToRemove(): Set<Type> =
-    annotationsToRemove(annotation<Graft.Annotations>())
-fun MethodNode.annotationsToRemove(): Set<Type> =
-    annotationsToRemove(annotation<Graft.Annotations>())
-fun FieldNode.annotationsToRemove(): Set<Type> =
-    annotationsToRemove(annotation<Graft.Annotations>())
-
-private fun annotationsToRemove(node: Result<AnnotationNode, Msg>): Set<Type> {
-    return node
-        .andThen { it.get<TypeList>("remove") }
-        .map(Iterable<Type>::toSet)
-        .get() ?: setOf()
+inline fun <reified T, reified R> Iterable<AnnotationNode>.read(
+    field: KProperty1<T, R>
+): Result<R, Msg> {
+    return findAnnotation(type<T>()).andThen { it.get<R>(field.name) }
 }
 
-/** returns value of [Graft.Annotations.overwrite] or `false` if not present */
-val ClassNode.overwriteAnnotations: Boolean
-    get() = overwriteAnnotations(annotation<Graft.Annotations>())
-val MethodNode.overwriteAnnotations: Boolean
-    get() = overwriteAnnotations(annotation<Graft.Annotations>())
-val FieldNode.overwriteAnnotations: Boolean
-    get() = overwriteAnnotations(annotation<Graft.Annotations>())
+inline fun <reified T> Iterable<AnnotationNode>.readType(
+    field: KProperty1<T, KClass<*>>
+): Result<Type, Msg> {
+    return findAnnotation(type<T>()).andThen { it.get<Type>(field.name) }
+}
 
-private fun overwriteAnnotations(node: Result<AnnotationNode, Msg>) =
-    node.andThen { it.get<Boolean>("overwrite") }.get() ?: false
+inline fun <reified T> Iterable<AnnotationNode>.readTypes(
+    field: KProperty1<T, Array<KClass<out Annotation>>>
+): Result<TypeList, Msg> {
+    return findAnnotation(type<T>()).andThen { it.get<TypeList>(field.name) }
+}
+
