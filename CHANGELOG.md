@@ -2,7 +2,10 @@
 
 ### 0.3.0-SNAPSHOT
 
-- **Fix**: `Graft.Annotations::overwrite` has no effect 
+### 0.2.1 - 2020-01-01
+
+- **Fix**: `Graft.Annotations::overwrite` does nothing
+ 
 
 ### 0.2.0 - 2019-12-30
 
