@@ -16,7 +16,7 @@ class GraftAnnotationTests {
             .unwrap()
 
         assertEquals(
-            setOf(type<AnnotationFusing.MyAnno>(), type<AnnotationFusing.MyAnnoRt>()),
+            listOf(type<AnnotationFusing.MyAnno>(), type<AnnotationFusing.MyAnnoRt>()),
             mn.annotations().asTypes())
     }
 
@@ -27,12 +27,12 @@ class GraftAnnotationTests {
             .onSuccess { cn ->
                 val f = cn.fields.first { it.name == "hmm" }
                 assertEquals(
-                    setOf(type<FusedField.Yolo>(), type<FusedField.Yolo2>()),
+                    listOf(type<FusedField.Yolo>(), type<FusedField.Yolo2>()),
                     f.annotations().asTypes())
 
                 val f2 = cn.fields.first { it.name == "transplantedWithAnnotation" }
                 assertEquals(
-                    setOf(type<FusedField.Yolo>()),
+                    listOf(type<FusedField.Yolo>()),
                     f2.annotations().asTypes())
             }
     }
@@ -44,7 +44,7 @@ class GraftAnnotationTests {
             .map { it.annotations().asTypes() }
             .onSuccess { annotations ->
                 assertEquals(
-                    setOf(type<FusedClass.AA>(), type<FusedClass.BB>()),
+                    listOf(type<FusedClass.AA>(), type<FusedClass.BB>()),
                     annotations)
             }
     }
@@ -62,14 +62,14 @@ class GraftAnnotationTests {
             .onSuccess { cn ->
                 val funA = cn.methods.first { it.name == "a" }
                 assertEquals(
-                    setOf(type<AnnotationFusing.MyAnnoRt>()),
+                    listOf(type<AnnotationFusing.MyAnnoRt>()),
                     funA.annotations().asTypes())
                 assertEquals(1, funA.readMyAnnoRt())
 
                 val funB = cn.methods.first { it.name == "b" }
                 assertEquals(1, funB.readMyAnnoRt())
                 assertEquals(
-                    setOf(type<AnnotationFusing.MyAnnoRt>()),
+                    listOf(type<AnnotationFusing.MyAnnoRt>()),
                     funB.annotations().asTypes())
             }
     }
@@ -81,7 +81,7 @@ class GraftAnnotationTests {
             .onSuccess { cn ->
                 val f = cn.fields.first { it.name == "hmm" }
                 assertEquals(
-                    setOf(),
+                    listOf(),
                     f.annotations().asTypes())
             }
     }
@@ -91,7 +91,7 @@ class GraftAnnotationTests {
         transplant<FusedClass.FooRemoverTransplant>()
             .map { it.annotations().asTypes() }
             .onFailure(`(╯°□°）╯︵ ┻━┻`)
-            .onSuccess { assertEquals(setOf(), it) }
+            .onSuccess { assertEquals(listOf(), it) }
     }
 
     @Test

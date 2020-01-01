@@ -25,7 +25,7 @@ inline fun <reified T> Iterable<AnnotationNode>.readType(
 
 inline fun <reified T> Iterable<AnnotationNode>.readTypes(
     field: KProperty1<T, Array<KClass<out Annotation>>>
-): Result<TypeList, Msg> {
+): Result<List<Type>, Msg> {
     return findAnnotation(type<T>()).andThen { it.get<TypeList>(field.name) }
 }
 

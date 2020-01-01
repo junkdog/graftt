@@ -18,7 +18,7 @@ operator fun Iterable<AnnotationNode>?.contains(type: Type) = when(this) {
     else -> findAnnotation(type.descriptor) is Ok
 }
 
-fun Iterable<AnnotationNode>?.asTypes(): Set<Type> = this?.map { Type.getType(it.desc) }?.toSet() ?: setOf()
+fun Iterable<AnnotationNode>?.asTypes(): List<Type> = this?.map { Type.getType(it.desc) } ?: listOf()
 
 fun Iterable<AnnotationNode>.findAnnotation(desc: String): Result<AnnotationNode, Msg.NoSuchAnnotation> {
     return find { it.desc == desc }
