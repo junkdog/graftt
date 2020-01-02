@@ -192,7 +192,7 @@
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
-                                <goals /> <!-- disable plugin -->
+                                <phase>none</phase>
                             </execution>
                         </executions>
                     </plugin>
@@ -350,6 +350,5 @@
             </plugins>
         </pluginManagement>
     </build>
-
 
 </project>

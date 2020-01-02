@@ -17,7 +17,6 @@
         <dokka.skip>true</dokka.skip>
     </properties>
 
-
     <profiles>
         <profile>
             <id>release</id>
@@ -30,6 +29,7 @@
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
+                                <phase>generate-sources</phase>
                                 <goals>
                                     <goal>jar</goal>
                                 </goals>

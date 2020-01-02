@@ -2,6 +2,11 @@
 
 ### 0.3.0-SNAPSHOT
 
+- **Fix**: publish [API docs] for `api` artifact
+
+ [API docs]: https://www.javadoc.io/doc/net.onedaybeard.graftt/api/latest/index.html 
+
+
 ### 0.2.1 - 2020-01-01
 
 - **Fix**: `Graft.Annotations::overwrite` does nothing
