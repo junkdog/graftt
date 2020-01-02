@@ -40,6 +40,13 @@ sealed class Transplant<T> {
         is Class  -> node.annotations()
     }
 
+    val name: String
+        get() = when (this) {
+            is Class  -> node.shortName
+            is Field  -> node.name
+            is Method -> node.name
+        }
+
     val overwriteAnnotations: Boolean
         get() = annotations().read(Graft.Annotations::overwrite).get() ?: false
 

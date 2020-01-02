@@ -163,52 +163,30 @@ private fun ClassNode.validateField(transplant: Transplant.Field): Result<Transp
     }
 }
 
-private fun ClassNode.validateAnnotations(
-    transplant: Transplant.Field
-): Result<Transplant.Field, Msg> {
+private fun ClassNode.validateAnnotations(transplant: Transplant.Class) =
+    validateAnnotations(transplant, this).map { transplant }
+private fun ClassNode.validateAnnotations(transplant: Transplant.Field) =
+    validateAnnotations(transplant, this).map { transplant }
+private fun ClassNode.validateAnnotations(transplant: Transplant.Method) =
+    validateAnnotations(transplant, this).map { transplant }
 
-    return validateAnnotations(
-        transplant = transplant,
-        symbolName = transplant.node.name,
-        annotationsToRemove = transplant.annotationsToRemove(),
-        originalAnnotations = transplant.findMatchingNode(this)?.annotations() ?: listOf()
-    ).map { transplant }
-}
-
-private fun ClassNode.validateAnnotations(
-    transplant: Transplant.Class
-): Result<Transplant.Class, Msg> {
-
-    return validateAnnotations(
-        transplant = transplant,
-        symbolName = transplant.node.shortName,
-        annotationsToRemove = transplant.annotationsToRemove(),
-        originalAnnotations = transplant.findMatchingNode(this)?.annotations() ?: listOf()
-    ).map { transplant }
-}
-
-private fun ClassNode.validateAnnotations(
-    transplant: Transplant.Method
-): Result<Transplant.Method, Msg> {
-
-    return validateAnnotations(
-        transplant = transplant,
-        symbolName = transplant.node.name,
-        annotationsToRemove = transplant.annotationsToRemove(),
-        originalAnnotations = transplant.findMatchingNode(this)?.annotations() ?: listOf()
-    ).map { transplant }
-}
-
-/** ensure annotations on [transplant] don't clash with [originalAnnotations]  */
-private fun <T> ClassNode.validateAnnotations(
+/** ensure annotations on [transplant] don't clash with annotations on recipient  */
+private fun <T> validateAnnotations(
     transplant: Transplant<T>,
-    symbolName: String,
-    annotationsToRemove: Iterable<Type>,
-    originalAnnotations: List<AnnotationNode>
+    recipient: ClassNode
 ): Result<Transplant<T>, Msg> {
 
+    val annotationsToRemove = transplant.annotationsToRemove()
+    val originalAnnotations = when (val n = transplant.findMatchingNode(recipient)) {
+        is ClassNode  -> n.annotations()
+        is FieldNode  -> n.annotations()
+        is MethodNode -> n.annotations()
+        null          -> listOf() // new element, not fusing
+        else          -> throw Error("$n")
+    }
+
     // abort early if the method/field is new
-    transplant.findMatchingNode(this)
+    transplant.findMatchingNode(recipient)
         ?: return if (annotationsToRemove.none())
             Ok(transplant)
         else
@@ -217,7 +195,7 @@ private fun <T> ClassNode.validateAnnotations(
     val unableToRemove = annotationsToRemove - originalAnnotations.asTypes()
     if (unableToRemove.isNotEmpty()) {
         return Err(Msg.UnableToRemoveAnnotation(
-            transplant.donor, symbolName, unableToRemove.joinToString()))
+            transplant.donor, transplant.name, unableToRemove.joinToString()))
     }
 
     if (!transplant.overwriteAnnotations) {
@@ -229,7 +207,7 @@ private fun <T> ClassNode.validateAnnotations(
 
         if (clashing.isNotEmpty()) {
             return Err(Msg.AnnotationAlreadyExists(
-                transplant.donor, symbolName, clashing.joinToString())
+                transplant.donor, transplant.name, clashing.joinToString())
             )
         }
     }
