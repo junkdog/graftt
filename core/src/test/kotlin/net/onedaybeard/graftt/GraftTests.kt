@@ -3,9 +3,9 @@ package net.onedaybeard.graftt
 import com.github.michaelbull.result.*
 import net.onedaybeard.graftt.asm.classNode
 import net.onedaybeard.graftt.asm.toBytes
-import net.onedaybeard.graftt.graft.readRecipientType
 import org.junit.Assert
 import org.junit.Test
+import java.lang.reflect.Field
 import kotlin.test.assertEquals
 
 class GraftTests {
@@ -221,10 +221,30 @@ class GraftTests {
     }
 
     @Test
+    fun `field modifiers can be changed by fusing`() {
+        val recipient = transplant<FieldModifiers.FooTransplant>()
+
+        instantiate(recipient) {
+            val fields = this::class.java.declaredFields.associateBy(Field::getName)
+
+            fun fieldModifiers(name: String) = fields[name]!!
+                .toString()
+                .replace(Regex("[\\w.]*\\$"), "")
+                .split(" ")
+                .dropLast(1)
+                .joinToString(" ")
+
+            assertEquals("volatile int",             fieldModifiers("a"))
+            assertEquals("transient int",            fieldModifiers("b"))
+            assertEquals("public static Foo",        fieldModifiers("c"))
+            assertEquals("private static final int", fieldModifiers("d"))
+        }
+    }
+
+    @Test
     fun `donor is unchanged by surgery`() {
         val donor = classNode<AnnotationFusing.BarTransplant>()
         transplant(donor)
-            .and { readRecipientType(donor) }
             .onFailure(`(╯°□°）╯︵ ┻━┻`)
             .onSuccess {
                 Assert.assertArrayEquals(

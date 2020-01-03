@@ -12,7 +12,8 @@ import org.objectweb.asm.tree.*
 import kotlin.reflect.KMutableProperty
 
 /**
- * Remaps graftable bytecode from [donor] to [recipient].
+ * Remaps graftable bytecode from [donor] to [recipient]. The
+ * [donor] instance is not mutated by this operation.
  *
  * All interfaces, methods and fields are transplanted, except
  * those annotated with [Graft.Mock]. Methods annotated with
@@ -42,6 +43,8 @@ fun transplant(
 /**
  * Remaps graftable bytecode from [donor] to the [Graft.Recipient] it
  * points to. The recipient is resolved in [loadClassNode].
+ *
+ * The [donor] instance is not mutated by this operation.
  */
 fun transplant(
     donor: ClassNode,
@@ -59,14 +62,14 @@ fun transplant(
  * Copies all elements from this list into [destination]. The destination list
  * is instantiated if it is `null`.
  */
-internal fun <T> MutableList<T>.copyIntoNullable(destination: KMutableProperty<MutableList<T>?>) {
+internal fun <T> Iterable<T>.copyIntoNullable(destination: KMutableProperty<MutableList<T>?>) {
     if (destination.getter.call() == null)
         destination.setter.call(mutableListOf<T>())
 
     destination.getter.call()!!.addAll(this)
 }
 
-private fun <T : Transplant<*>> ClassNode.removeAnnotations(transplant: T): Result<T, Msg> {
+private fun <T : Transplant<*>> ClassNode.removeRequestedAnnotations(transplant: T): Result<T, Msg> {
     val toRemove = transplant.annotationsToRemove()
     fun remove(annotations: KMutableProperty<MutableList<AnnotationNode>?>) {
         if (annotations.getter.call() == null)
@@ -85,47 +88,40 @@ private fun <T : Transplant<*>> ClassNode.removeAnnotations(transplant: T): Resu
     return Ok(transplant)
 }
 
-private fun ClassNode.fuseAnnotations(transplant: Transplant.Method): Result<Transplant.Method, Msg> {
-    val method = transplant.node
-    val original = transplant.findMatchingNode(this)
-        ?: return Ok(transplant)
-
-    original.invisibleAnnotations?.copyIntoNullable(method::invisibleAnnotations)
-    original.visibleAnnotations?.copyIntoNullable(method::visibleAnnotations)
-
-    return Ok(transplant)
-}
-
-private fun ClassNode.fuseAnnotations(transplant: Transplant.Field): Result<Transplant.Field, Msg> {
-    val field = transplant.node
-    val original = transplant.findMatchingNode(this)
-        ?: return Ok(transplant)
-
-    original.invisibleAnnotations?.copyIntoNullable(field::invisibleAnnotations)
-    original.visibleAnnotations?.copyIntoNullable(field::visibleAnnotations)
-
-    return Ok(transplant)
-}
-
-private fun ClassNode.fuseAnnotations(transplant: Transplant.Class): Result<Transplant.Class, Msg> {
-    val cls = transplant.node
-    val original = transplant.findMatchingNode(this)
-        ?: return Ok(transplant)
-
-    // NB: Transplant.Field and Transplant.Method copies from the original,
-    // but we can't do this for classes as we're mutating the instance directly
-    cls.invisibleAnnotations?.copyIntoNullable(original::invisibleAnnotations)
-    cls.visibleAnnotations?.copyIntoNullable(original::visibleAnnotations)
-
-    original.invisibleAnnotations
-        .removeIf(AnnotationNode::isGraftAnnotation)
+@Suppress("UnnecessaryVariable")
+private fun <T : Transplant<*>> ClassNode.fuseAnnotations(transplant: T): Result<T, Msg> {
+    when (val t = transplant.takeIf { it.findMatchingNode(this) != null }) {
+        is Transplant.Class  -> {
+            // NB: Transplant.Field and Transplant.Method copies from the original,
+            // but we can't do this here as we're mutating the recipient directly
+            val original = t.findMatchingNode(this)!!
+            t.node.invisibleAnnotations?.removeIf(AnnotationNode::isGraftAnnotation)
+            t.node.invisibleAnnotations?.copyIntoNullable(original::invisibleAnnotations)
+            t.node.visibleAnnotations?.copyIntoNullable(original::visibleAnnotations)
+        }
+        is Transplant.Field  -> {
+            val original = t.findMatchingNode(this)!!
+            (original.invisibleAnnotations ?: listOf())
+                .filterNot(AnnotationNode::isGraftAnnotation)
+                .copyIntoNullable(t.node::invisibleAnnotations)
+            original.visibleAnnotations?.copyIntoNullable(t.node::visibleAnnotations)
+        }
+        is Transplant.Method -> {
+            val original = t.findMatchingNode(this)!!
+            (original.invisibleAnnotations ?: listOf())
+                .filterNot(AnnotationNode::isGraftAnnotation)
+                .copyIntoNullable(t.node::invisibleAnnotations)
+            original.visibleAnnotations?.copyIntoNullable(t.node::visibleAnnotations)
+        }
+        null                 -> Unit
+        else                 -> throw Error("$t")
+    }
 
     return Ok(transplant)
 }
 
 private fun ClassNode.validateField(transplant: Transplant.Field): Result<Transplant.Field, Msg> {
     val field = transplant.node
-
     val doFuse = field.hasAnnotation(type<Graft.Fuse>())
     val canFuse = fields.find(field::signatureEquals) != null
 
@@ -178,7 +174,7 @@ fun <T : Transplant<*>> ClassNode.validateAnnotations(
     return Ok(transplant)
 }
 
-private fun ClassNode.updateOriginalMethod(transplant: Transplant.Method): Result<Transplant.Method, Msg> {
+private fun ClassNode.updateOriginalMethod(transplant: Transplant<MethodNode>): Result<Transplant.Method, Msg> {
     val method = transplant.node
     val original = methods.find(method::signatureEquals)
         ?.apply { name += "\$original" }
@@ -190,7 +186,7 @@ private fun ClassNode.updateOriginalMethod(transplant: Transplant.Method): Resul
     return when {
         !doFuse && canFuse  -> Err(Msg.MethodAlreadyExists(donor, method.name))
         doFuse && !canFuse  -> Err(Msg.WrongFuseSignature(donor, method.name))
-        !doFuse && !canFuse -> Ok(transplant)
+        !doFuse && !canFuse -> Ok(transplant as Transplant.Method)
         else -> {
             val self = transplant.transplantLookup.mapType(donor)
             val replacesOriginal = method.asSequence()
@@ -203,7 +199,7 @@ private fun ClassNode.updateOriginalMethod(transplant: Transplant.Method): Resul
             if (replacesOriginal)
                 methods.remove(original)
 
-            Ok(transplant)
+            Ok(transplant as Transplant.Method)
         }
     }
 }
@@ -220,29 +216,26 @@ private fun substituteTransplants(transplant: Transplant.Method): Result<Transpl
 }
 
 private fun substituteTransplants(transplant: Transplant.Field): Result<Transplant.Field, Msg> {
-    TODO("write test")
     val fn = transplant.node.copy()
     val remapper = transplant.transplantLookup
 
-    fn.signature = remapper.mapSignature(fn.signature, true)
     fn.desc = remapper.mapDesc(fn.desc)
+    if (fn.signature != null)
+        fn.signature = remapper.mapSignature(fn.signature, true)
 
     return Ok(transplant.copy(node = fn))
 }
 
-/** update references to transplants in annotations */
-private fun <T : Transplant<*>> substituteAnnotations(transplant: T): Result<T, Msg> {
-    val remapper = transplant.transplantLookup
-
-    transplant.annotations()
-        .filterNot(AnnotationNode::isGraftAnnotation)
-        .forEach { an ->
+/** Returns a copy with all transplant annotation types resolved to recipient types */
+@Suppress("UNCHECKED_CAST")
+private fun <T : Transplant<*>> T.substituteAnnotations(): Result<T, Msg> {
+    return Ok((copy() as T).apply {
+        annotations().forEach { an ->
             val updated = AnnotationNode(an.desc)
-            an.accept(AnnotationRemapper(updated, remapper))
+            an.accept(AnnotationRemapper(updated, transplantLookup))
             an.values = updated.values
         }
-
-    return Ok(transplant)
+    })
 }
 
 /** all methods except mocked, constructor and static initializer */
@@ -321,12 +314,15 @@ private class Surgery(val recipient: ClassNode, val remapper: Remapper) {
         .andThen(::methods)
         .map { recipient }
 
+    fun <T : Transplant<*>> validateAndFuseAnnotations(transplant: T): Result<T, Msg> = Ok(transplant)
+        .andThen(Transplant<*>::substituteAnnotations)
+        .andThen(recipient::validateAnnotations)
+        .andThen(recipient::removeRequestedAnnotations)
+        .andThen(recipient::fuseAnnotations) as Result<T, Msg>
+
     fun classAnnotations(donor: ClassNode): Result<ClassNode, Msg> {
         return Ok(Transplant.Class(donor.name, donor, remapper))
-            .andThen { substituteAnnotations(it) }
-            .andThen { recipient.validateAnnotations(it) }
-            .andThen(recipient::removeAnnotations)
-            .andThen { recipient.fuseAnnotations(it) }
+            .andThen { validateAndFuseAnnotations(it) }
             .map { donor }
     }
 
@@ -349,14 +345,11 @@ private class Surgery(val recipient: ClassNode, val remapper: Remapper) {
         return Ok(donor)
             .map(ClassNode::graftableFields)
             .mapAll(verifyFieldNotInitialized(donor))
-            .mapAll { f -> Ok(Transplant.Field(donor.name, f, remapper)) }
+            .mapAll { f -> Ok(Transplant.Field(donor.name, f.copy(), remapper)) }
+            .mapAll(::substituteTransplants)
             .mapAll(recipient::validateField)
-            .mapAll { substituteAnnotations(it) }
-            .mapAll(recipient::validateAnnotations)
-            .mapAll { t -> Ok(t.copy(donor = remapper.mapType(donor.name))) }
-            .mapAll(recipient::removeAnnotations)
-            .mapAll(recipient::fuseAnnotations)
-            .mapAll(recipient::graft)
+            .mapAll(::validateAndFuseAnnotations)
+            .mapAll { f -> recipient.graft(f as Transplant.Field) }
             .map { donor }
     }
 
@@ -364,11 +357,8 @@ private class Surgery(val recipient: ClassNode, val remapper: Remapper) {
         return Ok(donor)
             .map(ClassNode::graftableMethods)
             .mapAll { fn -> Ok(Transplant.Method(donor.name, fn, remapper)) }
-            .mapAll { substituteAnnotations(it) }
-            .mapAll { fn -> recipient.validateAnnotations(fn) }
-            .mapAll(recipient::removeAnnotations)
-            .mapAll(recipient::fuseAnnotations)
-            .mapAll(::substituteTransplants)
+            .mapAll { fn -> substituteTransplants(fn) }
+            .mapAll { fn -> validateAndFuseAnnotations(fn) }
             .mapAll(recipient::updateOriginalMethod)
             .mapAll(recipient::graft)
             .map { donor }

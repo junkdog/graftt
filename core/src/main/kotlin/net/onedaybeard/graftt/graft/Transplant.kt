@@ -57,7 +57,7 @@ sealed class Transplant<T> {
      * isn't present, an empty list is returned.
      */
     fun annotationsToRemove(): List<Type> {
-        val toRemove: List<Type> = annotations()
+        val toRemove = annotations()
             .readTypes(Graft.Annotations::remove)
             .get() ?: listOf()
 
@@ -78,5 +78,10 @@ sealed class Transplant<T> {
         is Method -> recipient.methods.find(node::signatureEquals)
         is Class  -> recipient
     } as T?
-}
 
+    fun copy(): Transplant<T> = when (this) {
+        is Class  -> copy(node = node.copy())
+        is Field  -> copy(node = node.copy())
+        is Method -> copy(node = node.copy(copyInsn = true))
+    } as Transplant<T>
+}

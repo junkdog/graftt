@@ -123,7 +123,7 @@ fun instantiate(cn: ClassNode, f: Any.() -> Unit = {}): Any {
     return instance
 }
 fun instantiate(cn: Result<ClassNode, Msg>, f: Any.() -> Unit = {}): Any {
-    return instantiate(cn.unwrap(), f)
+    return instantiate(cn.get() ?: throw cn.getError()!!.toException(), f)
 }
 
 fun instantiate(vararg cns: ClassNode, f: (List<Any>) -> Unit = {}): List<Any> {
@@ -148,4 +148,3 @@ private class ByteClassLoader : ClassLoader() {
         return clazz
     }
 }
-

@@ -3,6 +3,7 @@
 ### 0.3.0-SNAPSHOT
 
 - **Fix**: publish [API docs] for `api` artifact
+- **Fix**: Transplant substitution when fusing fields 
 
  [API docs]: https://www.javadoc.io/doc/net.onedaybeard.graftt/api/latest/index.html 
 
