@@ -2,8 +2,6 @@ package net.onedaybeard.graftt
 
 import com.github.michaelbull.result.*
 import net.onedaybeard.graftt.asm.*
-import net.onedaybeard.graftt.graft.TypeList
-import net.onedaybeard.graftt.graft.read
 import org.junit.Test
 import org.objectweb.asm.tree.MethodNode
 import kotlin.test.assertEquals
@@ -128,8 +126,8 @@ class GraftAnnotationTests {
             SubstituteAnnoValues.BarTransplant::class,
             SubstituteAnnoValues.FooTransplant::class)
 
-        foo.annotation<SubstituteAnnoValues.AA>()
-            .andThen { it.get<TypeList>("value") }
+        foo.annotations()
+            .readTypes(SubstituteAnnoValues.AA::value)
             .onFailure(`(╯°□°）╯︵ ┻━┻`)
             .onSuccess { assertEquals(
                 expected = listOf(type<SubstituteAnnoValues.Bar>()),

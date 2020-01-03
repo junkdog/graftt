@@ -14,12 +14,8 @@ val ClassNode.qualifiedName: String
 val ClassNode.shortName: String
     get() = qualifiedName.substringAfterLast(".")
 
-val ClassNode.type: Type
-    get() = Type.getType("L$name;")
-
-operator fun ClassNode.contains(t: Transplant.Method): Boolean {
-    return methods.find { it.signatureEquals(t.node) } != null
-}
+operator fun ClassNode.contains(t: Transplant.Method): Boolean =
+    methods.find(t.node::signatureEquals) != null
 
 fun ClassNode.annotations(): List<AnnotationNode> =
     (invisibleAnnotations ?: listOf()) + (visibleAnnotations ?: listOf())

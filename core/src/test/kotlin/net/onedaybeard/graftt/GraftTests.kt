@@ -81,7 +81,6 @@ class GraftTests {
     @Test
     fun `transplanted must not extend any base class`() {
         transplant<DeclaredFieldBrokenParentTransplant>()
-            .andThen { donor -> transplant(donor) }
             .assertErr(Msg.TransplantMustNotExtendClass(
                 "net/onedaybeard/graftt/DeclaredFieldBrokenParentTransplant"))
     }

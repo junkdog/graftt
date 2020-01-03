@@ -34,12 +34,6 @@ sealed class Transplant<T> {
     abstract val node: T
     abstract val transplantLookup: Remapper
 
-    fun annotations(): List<AnnotationNode> = when (this) {
-        is Field  -> node.annotations()
-        is Method -> node.annotations()
-        is Class  -> node.annotations()
-    }
-
     val name: String
         get() = when (this) {
             is Class  -> node.shortName
@@ -50,6 +44,12 @@ sealed class Transplant<T> {
     val overwriteAnnotations: Boolean
         get() = annotations().read(Graft.Annotations::overwrite).get() ?: false
 
+    fun annotations(): List<AnnotationNode> = when (this) {
+        is Field  -> node.annotations()
+        is Method -> node.annotations()
+        is Class  -> node.annotations()
+    }
+
     /**
      * Returns types to remove from recipient. These are comprised of the types
      * declared in [Graft.Annotations.remove] and all annotations decorating
@@ -57,23 +57,26 @@ sealed class Transplant<T> {
      * isn't present, an empty list is returned.
      */
     fun annotationsToRemove(): List<Type> {
-        val explicitRemovals: List<Type> = annotations()
+        val toRemove: List<Type> = annotations()
             .readTypes(Graft.Annotations::remove)
             .get() ?: listOf()
 
         return if (overwriteAnnotations) {
-            val overwritten = annotations().filterNot(AnnotationNode::isGraftAnnotation).asTypes()
-            (explicitRemovals + overwritten).distinct()
+            val overwritten = annotations()
+                .filterNot(AnnotationNode::isGraftAnnotation)
+                .asTypes()
+
+            (toRemove + overwritten).distinct()
         } else {
-            explicitRemovals
+            toRemove
         }
     }
 
     @Suppress("IMPLICIT_CAST_TO_ANY", "UNCHECKED_CAST")
-    fun findMatchingNode(other: ClassNode): T? = when (this) {
-        is Field  -> other.fields.find { it.signatureEquals(node) }
-        is Method -> other.methods.find { it.signatureEquals(node) }
-        is Class  -> other
+    fun findMatchingNode(recipient: ClassNode): T? = when (this) {
+        is Field  -> recipient.fields.find(node::signatureEquals)
+        is Method -> recipient.methods.find(node::signatureEquals)
+        is Class  -> recipient
     } as T?
 }
 
