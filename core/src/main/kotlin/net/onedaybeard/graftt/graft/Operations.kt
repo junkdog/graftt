@@ -95,7 +95,7 @@ private fun <T : Transplant<*>> ClassNode.fuseAnnotations(transplant: T): Result
     return Ok(transplant)
 }
 
-private fun <T : Transplant<*>> ClassNode.removeRequestedAnnotations(transplant: T): Result<T, Msg> {
+private fun <T : Transplant<*>> ClassNode.removeAnnotations(transplant: T): Result<T, Msg> {
     val toRemove = transplant.annotationsToRemove()
     fun remove(annotations: KMutableProperty<MutableList<AnnotationNode>?>) {
         if (annotations.getter.call() == null)
@@ -168,7 +168,9 @@ fun <T : Transplant<*>> ClassNode.validateAnnotations(
     return Ok(transplant)
 }
 
-private fun ClassNode.updateOriginalMethod(transplant: Transplant<MethodNode>): Result<Transplant.Method, Msg> {
+private fun ClassNode.updateOriginalMethod(
+    transplant: Transplant<MethodNode>
+): Result<Transplant.Method, Msg> {
     transplant as Transplant.Method
 
     val method = transplant.node
@@ -184,10 +186,9 @@ private fun ClassNode.updateOriginalMethod(transplant: Transplant<MethodNode>): 
         doFuse && !canFuse  -> Err(Msg.WrongFuseSignature(donor, method.name))
         !doFuse && !canFuse -> Ok(transplant)
         else -> {
-            val self = transplant.transplantLookup.mapType(donor)
             val replacesOriginal = method.asSequence()
                 .mapNotNull { insn -> insn as? MethodInsnNode }
-                .filter { insn -> insn.owner == self }
+                .filter { insn -> insn.owner == name }
                 .filter(method::signatureEquals)
                 .onEach { it.name = original!!.name }
                 .count() == 0
@@ -267,6 +268,7 @@ private val ctorOrStaticInit: (MethodNode) -> Boolean =
 
 /** Convenience class for transplanting to [recipient] */
 private class Surgery(val recipient: ClassNode, val remapper: Remapper) {
+
     fun transplant(donor: ClassNode) = Ok(donor)
         .andThen(::remapDonor)
         .andThen(::classAnnotations)
@@ -278,14 +280,18 @@ private class Surgery(val recipient: ClassNode, val remapper: Remapper) {
     fun remapDonor(donor: ClassNode) = Ok(donor.copy(remapper)
         .also { cn -> cn.name = donor.name }) // for errors to propagate correctly
 
-    fun classAnnotations(donor: ClassNode) = Ok(Transplant.Class(donor.name, donor))
-        .andThen { validateAndFuseAnnotations(it) }
-        .map { donor }
+    fun classAnnotations(donor: ClassNode): Result<ClassNode, Msg> {
+        return Ok(Transplant.Class(donor.name, donor))
+            .andThen { validateAndFuseAnnotations(it) }
+            .map { donor }
+    }
 
-    fun <T : Transplant<*>> validateAndFuseAnnotations(transplant: T): Result<T, Msg> = Ok(transplant)
-        .andThen { recipient.validateAnnotations(it) }
-        .andThen(recipient::removeRequestedAnnotations)
-        .andThen(recipient::fuseAnnotations)
+    fun <T : Transplant<*>> validateAndFuseAnnotations(transplant: T): Result<T, Msg> {
+        return (Ok(transplant) as Result<T, Msg>)
+            .andThen(recipient::validateAnnotations)
+            .andThen(recipient::removeAnnotations)
+            .andThen(recipient::fuseAnnotations)
+    }
 
     fun interfaces(donor: ClassNode): Result<ClassNode, Msg> {
         fun checkRecipientInterface(iface: String) =
@@ -316,7 +322,7 @@ private class Surgery(val recipient: ClassNode, val remapper: Remapper) {
     fun methods(donor: ClassNode): Result<ClassNode, Msg> {
         return Ok(donor)
             .map(ClassNode::graftableMethods)
-            .mapAll { fn -> Ok(Transplant.Method(donor.name, fn, remapper)) }
+            .mapAll { fn -> Ok(Transplant.Method(donor.name, fn)) }
             .mapAll { fn -> validateAndFuseAnnotations(fn) }
             .mapAll(recipient::updateOriginalMethod)
             .mapAll(recipient::graft)

@@ -4,7 +4,6 @@ import com.github.michaelbull.result.get
 import net.onedaybeard.graftt.Graft
 import net.onedaybeard.graftt.asm.*
 import org.objectweb.asm.Type
-import org.objectweb.asm.commons.Remapper
 import org.objectweb.asm.tree.AnnotationNode
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldNode
@@ -18,8 +17,7 @@ sealed class Transplant<T> {
 
     data class Method(
         override val donor: String,
-        override val node: MethodNode,
-        val transplantLookup: Remapper
+        override val node: MethodNode
     ) : Transplant<MethodNode>()
 
     /** used for mutating annotations on recipient */
@@ -76,6 +74,7 @@ sealed class Transplant<T> {
         is Class  -> recipient
     } as T?
 
+    @Suppress("UNCHECKED_CAST")
     fun copy(): Transplant<T> = when (this) {
         is Class  -> copy(node = node.copy())
         is Field  -> copy(node = node.copy())

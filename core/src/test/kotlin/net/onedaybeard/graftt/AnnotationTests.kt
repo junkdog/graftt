@@ -4,7 +4,6 @@ import net.onedaybeard.graftt.asm.*
 import net.onedaybeard.graftt.graft.Transplant
 import net.onedaybeard.graftt.graft.graftableMethods
 import org.junit.Test
-import org.objectweb.asm.commons.SimpleRemapper
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -15,7 +14,7 @@ class AnnotationTests {
         val types = classNode<AnnotationFusing.FooTransplant>()
             .graftableMethods()
             .first { it.name == "a" }
-            .let { Transplant.Method("", it, SimpleRemapper(mapOf())) }
+            .let { Transplant.Method("", it) }
             .annotationsToRemove()
 
         assertEquals(
@@ -28,7 +27,7 @@ class AnnotationTests {
         val overwrite = classNode<AnnotationFusing.FooTransplant>()
             .graftableMethods()
             .first { it.name == "b" }
-            .let { Transplant.Method("", it, SimpleRemapper(mapOf())) }
+            .let { Transplant.Method("", it) }
             .overwriteAnnotations
 
         assertTrue(overwrite)
