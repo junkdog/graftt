@@ -4,6 +4,8 @@ import net.onedaybeard.graftt.graft.Transplant
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
+import org.objectweb.asm.commons.ClassRemapper
+import org.objectweb.asm.commons.Remapper
 import org.objectweb.asm.tree.AnnotationNode
 import org.objectweb.asm.tree.ClassNode
 
@@ -24,14 +26,11 @@ fun ClassNode.hasAnnotation(type: Type) =
     type in visibleAnnotations || type in invisibleAnnotations
 
 fun ClassNode.copy() = ClassNode(Opcodes.ASM7).also(::accept)
+fun ClassNode.copy(remapper: Remapper) = ClassNode(Opcodes.ASM7)
+    .also { cn -> accept(ClassRemapper(cn, remapper)) }
 
 fun ClassNode.toBytes(): ByteArray {
     val cw = ClassWriter(0)
     accept(cw)
     return cw.toByteArray()
 }
-
-
-
-
-

@@ -5,8 +5,6 @@ import net.onedaybeard.graftt.*
 import net.onedaybeard.graftt.asm.*
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type
-import org.objectweb.asm.commons.AnnotationRemapper
-import org.objectweb.asm.commons.ClassRemapper
 import org.objectweb.asm.commons.Remapper
 import org.objectweb.asm.tree.*
 import kotlin.reflect.KMutableProperty
@@ -171,6 +169,8 @@ fun <T : Transplant<*>> ClassNode.validateAnnotations(
 }
 
 private fun ClassNode.updateOriginalMethod(transplant: Transplant<MethodNode>): Result<Transplant.Method, Msg> {
+    transplant as Transplant.Method
+
     val method = transplant.node
     val original = methods.find(method::signatureEquals)
         ?.apply { name += "\$original" }
@@ -182,7 +182,7 @@ private fun ClassNode.updateOriginalMethod(transplant: Transplant<MethodNode>): 
     return when {
         !doFuse && canFuse  -> Err(Msg.MethodAlreadyExists(donor, method.name))
         doFuse && !canFuse  -> Err(Msg.WrongFuseSignature(donor, method.name))
-        !doFuse && !canFuse -> Ok(transplant as Transplant.Method)
+        !doFuse && !canFuse -> Ok(transplant)
         else -> {
             val self = transplant.transplantLookup.mapType(donor)
             val replacesOriginal = method.asSequence()
@@ -195,21 +195,9 @@ private fun ClassNode.updateOriginalMethod(transplant: Transplant<MethodNode>): 
             if (replacesOriginal)
                 methods.remove(original)
 
-            Ok(transplant as Transplant.Method)
+            Ok(transplant)
         }
     }
-}
-
-/** Returns a copy with all transplant annotation types resolved to recipient types */
-@Suppress("UNCHECKED_CAST")
-private fun <T : Transplant<*>> T.substituteAnnotations(): Result<T, Msg> {
-    return Ok((copy() as T).apply {
-        annotations().forEach { an ->
-            val updated = AnnotationNode(an.desc)
-            an.accept(AnnotationRemapper(updated, transplantLookup))
-            an.values = updated.values
-        }
-    })
 }
 
 /** all methods except mocked, constructor and static initializer */
@@ -279,14 +267,6 @@ private val ctorOrStaticInit: (MethodNode) -> Boolean =
 
 /** Convenience class for transplanting to [recipient] */
 private class Surgery(val recipient: ClassNode, val remapper: Remapper) {
-
-    private fun remapDonor(donor: ClassNode): Result<ClassNode, Msg> {
-        return Ok(ClassNode().also { cn ->
-            donor.accept(ClassRemapper(cn, remapper))
-            cn.name = donor.name // for errors to propagate correctly
-        })
-    }
-
     fun transplant(donor: ClassNode) = Ok(donor)
         .andThen(::remapDonor)
         .andThen(::classAnnotations)
@@ -295,18 +275,17 @@ private class Surgery(val recipient: ClassNode, val remapper: Remapper) {
         .andThen(::methods)
         .map { recipient }
 
-    @Suppress("UNCHECKED_CAST")
-    fun <T : Transplant<*>> validateAndFuseAnnotations(transplant: T): Result<T, Msg> = Ok(transplant)
-        .andThen(Transplant<*>::substituteAnnotations)
-        .andThen(recipient::validateAnnotations)
-        .andThen(recipient::removeRequestedAnnotations)
-        .andThen(recipient::fuseAnnotations) as Result<T, Msg>
+    fun remapDonor(donor: ClassNode) = Ok(donor.copy(remapper)
+        .also { cn -> cn.name = donor.name }) // for errors to propagate correctly
 
-    fun classAnnotations(donor: ClassNode): Result<ClassNode, Msg> {
-        return Ok(Transplant.Class(donor.name, donor, remapper))
-            .andThen { validateAndFuseAnnotations(it) }
-            .map { donor }
-    }
+    fun classAnnotations(donor: ClassNode) = Ok(Transplant.Class(donor.name, donor))
+        .andThen { validateAndFuseAnnotations(it) }
+        .map { donor }
+
+    fun <T : Transplant<*>> validateAndFuseAnnotations(transplant: T): Result<T, Msg> = Ok(transplant)
+        .andThen { recipient.validateAnnotations(it) }
+        .andThen(recipient::removeRequestedAnnotations)
+        .andThen(recipient::fuseAnnotations)
 
     fun interfaces(donor: ClassNode): Result<ClassNode, Msg> {
         fun checkRecipientInterface(iface: String) =
@@ -327,7 +306,7 @@ private class Surgery(val recipient: ClassNode, val remapper: Remapper) {
         return Ok(donor)
             .map(ClassNode::graftableFields)
             .mapAll(verifyFieldNotInitialized(donor))
-            .mapAll { f -> Ok(Transplant.Field(donor.name, f.copy(), remapper)) }
+            .mapAll { f -> Ok(Transplant.Field(donor.name, f.copy())) }
             .mapAll(recipient::validateField)
             .mapAll(::validateAndFuseAnnotations)
             .mapAll(recipient::graft)

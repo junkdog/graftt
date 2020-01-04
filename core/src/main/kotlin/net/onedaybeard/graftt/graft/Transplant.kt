@@ -13,26 +13,23 @@ import org.objectweb.asm.tree.MethodNode
 sealed class Transplant<T> {
     data class Field(
         override val donor: String,
-        override val node: FieldNode,
-        override val transplantLookup: Remapper
+        override val node: FieldNode
     ) : Transplant<FieldNode>()
 
     data class Method(
         override val donor: String,
         override val node: MethodNode,
-        override val transplantLookup: Remapper
+        val transplantLookup: Remapper
     ) : Transplant<MethodNode>()
 
     /** used for mutating annotations on recipient */
     data class Class(
         override val donor: String,
-        override val node: ClassNode,
-        override val transplantLookup: Remapper
+        override val node: ClassNode
     ) : Transplant<ClassNode>()
 
     abstract val donor: String
     abstract val node: T
-    abstract val transplantLookup: Remapper
 
     val name: String
         get() = when (this) {
