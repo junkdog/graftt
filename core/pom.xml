@@ -98,4 +98,35 @@
         </dependency>
     </dependencies>
 
+    <build>
+        <plugins>
+             <plugin>
+                <groupId>org.jetbrains.dokka</groupId>
+                <artifactId>dokka-maven-plugin</artifactId>
+                <version>${dokka.version}</version>
+                 <configuration>
+                     <externalDocumentationLinks>
+                         <link>
+                             <url>https://www.javadoc.io/doc/org.ow2.asm/asm/${asm.version}/</url>
+                             <packageListUrl>https://www.javadoc.io/doc/org.ow2.asm/asm/${asm.version}/package-list</packageListUrl>
+                         </link>
+                     </externalDocumentationLinks>
+
+                     <sourceLinks>
+                         <link>
+                             <path>${project.parent}/api/src/main/java</path>
+                             <lineSuffix>#L</lineSuffix>
+                         </link>
+                     </sourceLinks>
+
+                     <sourceRoots>
+                         <root>
+                             <path>${project.parent.basedir}/api/src/main/java</path>
+                         </root>
+                     </sourceRoots>
+                 </configuration>
+             </plugin>
+
+        </plugins>
+    </build>
 </project>

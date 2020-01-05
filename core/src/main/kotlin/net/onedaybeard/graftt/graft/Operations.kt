@@ -135,9 +135,9 @@ fun <T : Transplant<*>> ClassNode.validateAnnotations(
         is FieldNode  -> recipientNode.annotations()
         is MethodNode -> recipientNode.annotations()
         else          -> throw Error("$recipientNode")
-    }
+    }.asTypes()
 
-    val unableToRemove = annotationsToRemove - originalAnnotations.asTypes()
+    val unableToRemove = annotationsToRemove - originalAnnotations
     if (unableToRemove.isNotEmpty()) {
         return Err(Msg.UnableToRemoveAnnotation(
             transplant.donor, transplant.name, unableToRemove.joinToString()))
@@ -147,7 +147,7 @@ fun <T : Transplant<*>> ClassNode.validateAnnotations(
         val clashing = transplant.annotations()
             .filterNot(AnnotationNode::isGraftAnnotation)
             .asTypes()
-            .intersect(originalAnnotations.asTypes() - annotationsToRemove)
+            .intersect(originalAnnotations - annotationsToRemove)
             .map { it.internalName }
 
         if (clashing.isNotEmpty()) {

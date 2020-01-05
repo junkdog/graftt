@@ -49,7 +49,6 @@ fun verify(source: ClassNode): Result<ClassNode, Msg> {
         } catch (e: AnalyzerException) {
             e.printStackTrace(pw)
         }
-
     }
     pw.flush()
 
@@ -66,7 +65,6 @@ fun classNodes(root: File): List<ClassNode> = when {
     root.extension == "jar" -> classesJar(root)
     else                    -> throw IllegalStateException(root.path)
 }
-
 
 private fun classesJar(root: File): List<ClassNode> {
     return ZipFile(root).use { archive ->
@@ -92,4 +90,3 @@ class GraftException(message: String, cause: Throwable? = null)
     constructor(message: Msg, cause: Throwable? = null)
         : this(message.toString(), cause)
 }
-
