@@ -39,7 +39,7 @@ sealed class Transplant<T> {
     val overwriteAnnotations: Boolean
         get() = annotations().read(Graft.Annotations::overwrite).get() ?: false
 
-    fun annotations(): List<AnnotationNode> = when (this) {
+    fun annotations(): MutableIterable<AnnotationNode> = when (this) {
         is Field  -> node.annotations()
         is Method -> node.annotations()
         is Class  -> node.annotations()
@@ -67,7 +67,7 @@ sealed class Transplant<T> {
     }
 
     @Suppress("IMPLICIT_CAST_TO_ANY", "UNCHECKED_CAST")
-    fun findMatchingNode(recipient: ClassNode): T? = when (this) {
+    fun findRecipientNode(recipient: ClassNode): T? = when (this) {
         is Field  -> recipient.fields.find(node::signatureEquals)
         is Method -> recipient.methods.find(node::signatureEquals)
         is Class  -> recipient

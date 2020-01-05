@@ -69,22 +69,22 @@ private fun <T> Iterable<T>.copyIntoNullable(destination: KMutableProperty<Mutab
 
 @Suppress("UnnecessaryVariable")
 private fun <T : Transplant<*>> ClassNode.graftAnnotations(transplant: T): Result<T, Msg> {
-    when (val t = transplant.takeIf { it.findMatchingNode(this) != null }) {
+    when (val t = transplant.takeIf { it.findRecipientNode(this) != null }) {
         is Transplant.Class  -> {
             // NB: Transplant.Field and Transplant.Method copies from the original,
             // but we can't do this here as we're mutating the recipient directly
-            val original = t.findMatchingNode(this)!!
+            val original = t.findRecipientNode(this)!!
             t.node.invisibleAnnotations?.removeIf(AnnotationNode::isGraftAnnotation)
             t.node.invisibleAnnotations?.copyIntoNullable(original::invisibleAnnotations)
             t.node.visibleAnnotations?.copyIntoNullable(original::visibleAnnotations)
         }
         is Transplant.Field  -> {
-            val original = t.findMatchingNode(this)!!
+            val original = t.findRecipientNode(this)!!
             original.invisibleAnnotations?.copyIntoNullable(t.node::invisibleAnnotations)
             original.visibleAnnotations?.copyIntoNullable(t.node::visibleAnnotations)
         }
         is Transplant.Method -> {
-            val original = t.findMatchingNode(this)!!
+            val original = t.findRecipientNode(this)!!
             original.invisibleAnnotations?.copyIntoNullable(t.node::invisibleAnnotations)
             original.visibleAnnotations?.copyIntoNullable(t.node::visibleAnnotations)
         }
@@ -97,19 +97,12 @@ private fun <T : Transplant<*>> ClassNode.graftAnnotations(transplant: T): Resul
 
 private fun <T : Transplant<*>> ClassNode.removeAnnotations(transplant: T): Result<T, Msg> {
     val toRemove = transplant.annotationsToRemove()
-    fun remove(annotations: KMutableProperty<MutableList<AnnotationNode>?>) {
-        if (annotations.getter.call() == null)
-            annotations.setter.call(ArrayList<Type>())
-
-        annotations.getter.call()!!.removeIf { it.type in toRemove }
-    }
-
-    when (val n = transplant.findMatchingNode(this)) {
-        is ClassNode  -> n::invisibleAnnotations to n::visibleAnnotations
-        is MethodNode -> n::invisibleAnnotations to n::visibleAnnotations
-        is FieldNode  -> n::invisibleAnnotations to n::visibleAnnotations
+    when (val n = transplant.findRecipientNode(this)) {
+        is ClassNode  -> n.annotations()
+        is MethodNode -> n.annotations()
+        is FieldNode  -> n.annotations()
         else          -> return Ok(transplant)
-    }.toList().forEach(::remove)
+    }.removeAll { it.type in toRemove }
 
     return Ok(transplant)
 }
@@ -117,7 +110,7 @@ private fun <T : Transplant<*>> ClassNode.removeAnnotations(transplant: T): Resu
 private fun ClassNode.validateField(transplant: Transplant.Field): Result<Transplant.Field, Msg> {
     val field = transplant.node
     val doFuse = field.hasAnnotation(type<Graft.Fuse>())
-    val canFuse = transplant.findMatchingNode(this) != null
+    val canFuse = transplant.findRecipientNode(this) != null
 
     return when {
         doFuse && !canFuse -> Err(Msg.WrongFuseSignature(transplant.donor, field.name))
@@ -131,7 +124,7 @@ fun <T : Transplant<*>> ClassNode.validateAnnotations(
     transplant: T
 ): Result<T, Msg> {
     val annotationsToRemove = transplant.annotationsToRemove()
-    val recipientNode = transplant.findMatchingNode(this)
+    val recipientNode = transplant.findRecipientNode(this)
         ?: return if (annotationsToRemove.none())
             Ok(transplant)
         else
@@ -227,14 +220,14 @@ fun readRecipientName(donor: ClassNode): Result<String, Msg> =
 
 /** rewrites this [ClassNode] according to [method] transplant */
 private fun ClassNode.graft(method: Transplant.Method): Result<ClassNode, Msg> {
-    method.node.invisibleAnnotations?.removeIf(AnnotationNode::isGraftAnnotation)
+    method.annotations().removeAll(AnnotationNode::isGraftAnnotation)
     methods.add(method.node)
     return Ok(this)
 }
 
 /** rewrites this [ClassNode] according to [field] transplant */
 private fun ClassNode.graft(field: Transplant.Field): Result<ClassNode, Msg> {
-    field.node.invisibleAnnotations?.removeIf(AnnotationNode::isGraftAnnotation)
+    field.annotations().removeAll(AnnotationNode::isGraftAnnotation)
     fields.removeIf { it.name == field.node.name }
     fields.add(field.node)
     return Ok(this)

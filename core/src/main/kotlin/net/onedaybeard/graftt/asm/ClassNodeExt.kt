@@ -1,6 +1,7 @@
 package net.onedaybeard.graftt.asm
 
 import net.onedaybeard.graftt.graft.Transplant
+import net.onedaybeard.graftt.collections.mutableIterables
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
@@ -19,8 +20,8 @@ val ClassNode.shortName: String
 operator fun ClassNode.contains(t: Transplant.Method): Boolean =
     methods.find(t.node::signatureEquals) != null
 
-fun ClassNode.annotations(): List<AnnotationNode> =
-    (invisibleAnnotations ?: listOf()) + (visibleAnnotations ?: listOf())
+fun ClassNode.annotations(): MutableIterable<AnnotationNode> =
+    mutableIterables(invisibleAnnotations, visibleAnnotations)
 
 fun ClassNode.hasAnnotation(type: Type) =
     type in visibleAnnotations || type in invisibleAnnotations

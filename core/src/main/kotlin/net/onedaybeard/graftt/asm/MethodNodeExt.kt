@@ -1,5 +1,6 @@
 package net.onedaybeard.graftt.asm
 
+import net.onedaybeard.graftt.collections.mutableIterables
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.AnnotationNode
 import org.objectweb.asm.tree.InsnList
@@ -7,8 +8,8 @@ import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.MethodNode
 
 
-fun MethodNode.annotations(): List<AnnotationNode> =
-    (invisibleAnnotations ?: listOf()) + (visibleAnnotations ?: listOf())
+fun MethodNode.annotations(): MutableIterable<AnnotationNode> =
+    mutableIterables(invisibleAnnotations, visibleAnnotations)
 
 fun MethodNode.hasAnnotation(type: Type) =
     type in visibleAnnotations || type in invisibleAnnotations
