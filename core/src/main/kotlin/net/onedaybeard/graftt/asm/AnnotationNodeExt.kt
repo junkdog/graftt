@@ -23,13 +23,13 @@ inline fun <reified T : Annotation, reified R> Iterable<AnnotationNode>.read(
 ) = findAnnotation<T>() andThen readField<R>(field.name)
 
 /** Reads class value of annotation property as type */
-inline fun <reified T : Annotation, R> Iterable<AnnotationNode>.readType(
-    field: KProperty1<T, R>
+inline fun <reified T : Annotation> Iterable<AnnotationNode>.readType(
+    field: KProperty1<T, *>
 ) = findAnnotation<T>() andThen readField<Type>(field.name)
 
 /** Reads class values of annotation property as types */
-inline fun <reified T : Annotation, R> Iterable<AnnotationNode>.readTypes(
-    field: KProperty1<T, Array<R>>
+inline fun <reified T : Annotation> Iterable<AnnotationNode>.readTypes(
+    field: KProperty1<T, Array<*>>
 ) = findAnnotation<T>() andThen readField<List<Type>>(field.name)
 
 inline fun <reified T> readField(

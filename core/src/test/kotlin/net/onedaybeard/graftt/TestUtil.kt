@@ -5,6 +5,7 @@ import net.onedaybeard.graftt.asm.classNode
 import net.onedaybeard.graftt.asm.internalName
 import net.onedaybeard.graftt.asm.qualifiedName
 import net.onedaybeard.graftt.asm.toBytes
+import net.onedaybeard.graftt.graft.readRecipientName
 import net.onedaybeard.graftt.graft.readRecipientType
 import net.onedaybeard.graftt.graft.transplant
 import org.objectweb.asm.Type
@@ -22,20 +23,17 @@ data class FieldObserver<T>(
     val original: T?,
     val updated: T?)
 
-
 inline fun <reified T> transplant(): Result<ClassNode, Msg> {
     return transplant(T::class)
 }
-
 
 fun transplant(type: KClass<*>, remapper: Remapper? = null): Result<ClassNode, Msg> {
     return transplant(classNode(type), remapper)
 }
 
 fun transplant(donor: ClassNode, remapper: Remapper? = null): Result<ClassNode, Msg> {
-
     val remapping = remapper
-        ?: SimpleRemapper(donor.name, readRecipientType(donor).unwrap().internalName)
+        ?: SimpleRemapper(donor.name, readRecipientName(donor).unwrap())
 
     return transplant(donor, ::loadClassNode, remapping)
 }
@@ -122,6 +120,7 @@ fun instantiate(cn: ClassNode, f: Any.() -> Unit = {}): Any {
     f(instance)
     return instance
 }
+
 fun instantiate(cn: Result<ClassNode, Msg>, f: Any.() -> Unit = {}): Any {
     return instantiate(cn.get() ?: throw cn.getError()!!.toException(), f)
 }

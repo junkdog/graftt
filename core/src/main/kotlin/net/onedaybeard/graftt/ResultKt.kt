@@ -3,6 +3,10 @@ package net.onedaybeard.graftt
 import com.github.michaelbull.result.*
 import java.lang.Exception
 
+/** Reference-friendly [Ok] with correct [Err] type */
+fun <T> ok(t: T): Result<T, Msg> = Ok(t)
+
+/** Reference-friendly [Result] creation */
 fun <T> resultOf(f: () -> T): Result<T, Msg> {
     return try {
         Ok(f())

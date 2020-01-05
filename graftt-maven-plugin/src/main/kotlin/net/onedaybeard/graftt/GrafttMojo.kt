@@ -5,6 +5,7 @@ import net.onedaybeard.graftt.asm.classNode
 import net.onedaybeard.graftt.asm.shortName
 import net.onedaybeard.graftt.asm.toBytes
 import net.onedaybeard.graftt.graft.isTransplant
+import net.onedaybeard.graftt.graft.readRecipientName
 import net.onedaybeard.graftt.graft.transplant
 import net.onedaybeard.graftt.graft.readRecipientType
 import org.apache.maven.artifact.Artifact
@@ -56,10 +57,8 @@ class GrafttMojo : AbstractMojo() {
         if (!enable) return
 
         val transplants = findTransplants()
-
         val remapper = transplants
-            .map { cn -> cn.name to readRecipientType(cn).map { it.internalName }.unwrap() }
-            .toMap()
+            .associateBy(ClassNode::name) { cn -> readRecipientName(cn).unwrap() }
             .let(::SimpleRemapper)
 
         // commence surgery

@@ -1,8 +1,8 @@
 # graftt - annotation-driven bytecode surgery 
 
 Rewrite existing classes by grafting bytecode from *Transplant* classes. Transplants are
-plain java classes and function like templates or blueprints; annotations define interactions
-with the recipient class. The entire API consists of 4 primary annotations.
+plain java classes and function like templates or patches; annotations define interactions
+with the recipient class. The entire API consists of 4 annotations.
 
 Transplants have complete access to the recipient class: Existing methods can be wrapped,
 changed or replaced entirely. Interfaces can be retrofitted and additional fields added.
@@ -101,11 +101,11 @@ public class SomeClass {
   call to `bar()` inside the transplant will point to `Foo::bar$original` once applied.
 - **`@Graft.Mock`** to keep the compiler happy when you need to reference fields or
   methods in the target class. Mocked references point to target class after transplant.
-- **`@Graft.Annotations`** configures removal and updating of annotations. The default
-  behavior copies all annotations from the transplant class and its symbol over to the
-  recipient.  
-- Any non-annotated methods or fields are copied over as-is.
-- All interfaces are copied over to recipient.
+- **`@Graft.Annotations`** overrides default configuration for removal and updating of
+  annotations. The default behavior copies all annotations from the transplanted elements
+  to the recipient.
+- Interfaces implemented by the transplant are added to the recipient.
+- All fields and methods, except those annotated with `@Graft.Mock`, are copied to recipient.
 
 Nice to have, but not now:
 - **`@Graft.Remove`**: Remove field or method from target class.

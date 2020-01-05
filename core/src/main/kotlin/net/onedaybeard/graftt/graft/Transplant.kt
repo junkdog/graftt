@@ -47,9 +47,8 @@ sealed class Transplant<T> {
 
     /**
      * Returns types to remove from recipient. These are comprised of the types
-     * declared in [Graft.Annotations.remove] and all annotations decorating
-     * the transplant if [Graft.Annotations.overwrite] is set. If the annotation
-     * isn't present, an empty list is returned.
+     * declared in [Graft.Annotations.remove], and all annotations decorating
+     * the transplant if [Graft.Annotations.overwrite] is set.
      */
     fun annotationsToRemove(): List<Type> {
         val toRemove = annotations()
@@ -73,11 +72,4 @@ sealed class Transplant<T> {
         is Method -> recipient.methods.find(node::signatureEquals)
         is Class  -> recipient
     } as T?
-
-    @Suppress("UNCHECKED_CAST")
-    fun copy(): Transplant<T> = when (this) {
-        is Class  -> copy(node = node.copy())
-        is Field  -> copy(node = node.copy())
-        is Method -> copy(node = node.copy(copyInsn = true))
-    } as Transplant<T>
 }

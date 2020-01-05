@@ -5,8 +5,8 @@ import net.onedaybeard.graftt.*
 import net.onedaybeard.graftt.asm.classNode
 import net.onedaybeard.graftt.asm.toBytes
 import net.onedaybeard.graftt.graft.isTransplant
+import net.onedaybeard.graftt.graft.readRecipientName
 import net.onedaybeard.graftt.graft.transplant
-import net.onedaybeard.graftt.graft.readRecipientType
 import org.objectweb.asm.commons.SimpleRemapper
 import org.objectweb.asm.tree.ClassNode
 import java.io.File
@@ -35,22 +35,15 @@ fun premain(agentArgs: String?, inst: Instrumentation) {
 
         fun register(root: File) {
             log.info { "searching for transplants: $root" }
-
-            val transplantNodes = classNodes(root)
+            classNodes(root)
                 .filter(ClassNode::isTransplant)
+                .forEach { cn -> register(cn, readRecipientName(cn).unwrap()) }
+        }
 
-            fun recipientName(cn: ClassNode): String {
-                return readRecipientType(cn)
-                    .unwrap()
-                    .internalName
-            }
-
-            transplantNodes.associateByTo(transplants) { cn ->
-                recipientName(cn)
-                    .also { log.debug { "found transplant: ${cn.name} -> $it" } }
-            }
-
-            transplantNodes.associateByTo(mapping, ClassNode::name, ::recipientName)
+        fun register(donor: ClassNode, recipient: String) {
+            log.debug { "registering transplant: ${donor.name} -> $recipient" }
+            transplants[recipient] = donor
+            mapping[donor.name] = recipient
         }
 
         override fun transform(
@@ -60,13 +53,10 @@ fun premain(agentArgs: String?, inst: Instrumentation) {
             protectionDomain: ProtectionDomain?,
             classfileBuffer: ByteArray
         ): ByteArray {
-            val cn = classNode(classfileBuffer)
 
-            readRecipientType(cn).map { it.internalName }.onSuccess { name ->
-                log.debug { "classloader touching transplant: $name" }
-                mapping[cn.name] = name
-                transplants[name] = cn
-            }
+            val cn = classNode(classfileBuffer)
+            readRecipientName(cn)
+                .onSuccess { recipient -> register(cn, recipient) }
 
             return transplants[className]?.let { donor ->
                 transplant(donor, cn, SimpleRemapper(mapping))
@@ -80,10 +70,7 @@ fun premain(agentArgs: String?, inst: Instrumentation) {
     })
 }
 
-
 private fun validate(args: Map<String, List<String>>) {
-    if (args.isEmpty()) return
-
     val valid = listOf("classpath", "cp")
 
     val invalid = args.filterKeys { it !in valid }
