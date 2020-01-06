@@ -15,19 +15,19 @@ val Class<*>.internalName: String
     get() = getInternalName(this)
 
 fun classReader(stream: InputStream) = stream.use(::ClassReader)
-fun classReader(klazz: KClass<*>) = classReader(klazz.java)
-fun classReader(file: File) = classReader(file.inputStream().buffered())
-fun classReader(bytes: ByteArray) = ClassReader(bytes)
+fun classReader(klazz: KClass<*>)    = classReader(klazz.java)
+fun classReader(file: File)          = classReader(file.inputStream().buffered())
+fun classReader(bytes: ByteArray)    = ClassReader(bytes)
 fun classReader(klazz: Class<*>) =
-    classReader(klazz.getResourceAsStream("/${getInternalName(klazz)}.class"))
+    classReader(klazz.getResourceAsStream("/${klazz.internalName}.class"))
 
-inline fun <reified T> classNode() = classNode(T::class)
-fun classNode(cr: ClassReader) = ClassNode().apply { cr.accept(this, 0) }
-fun classNode(bytes: ByteArray) = classNode(classReader(bytes))
-fun classNode(klazz: KClass<*>) = classNode(klazz.java)
-fun classNode(klazz: Class<*>) = classNode(classReader(klazz))
-fun classNode(stream: InputStream) = classNode(classReader(stream))
-fun classNode(file: File) = classNode(classReader(file))
+inline fun <reified T> classNode()   = classNode(T::class)
+fun classNode(cr: ClassReader)       = ClassNode().apply { cr.accept(this, 0) }
+fun classNode(bytes: ByteArray)      = classNode(classReader(bytes))
+fun classNode(klazz: KClass<*>)      = classNode(classReader(klazz))
+fun classNode(klazz: Class<*>)       = classNode(classReader(klazz))
+fun classNode(stream: InputStream)   = classNode(classReader(stream))
+fun classNode(file: File)            = classNode(classReader(file))
 
 val ClassNode.type: Type
     get() = Type.getType("L$name;")
@@ -36,4 +36,3 @@ val AnnotationNode.type: Type
 
 inline fun <reified T> type() = type(T::class)
 fun type(cls: KClass<*>) = Type.getType(cls.java)!!
-

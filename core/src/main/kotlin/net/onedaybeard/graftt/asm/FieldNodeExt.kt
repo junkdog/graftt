@@ -1,13 +1,13 @@
 package net.onedaybeard.graftt.asm
 
-import net.onedaybeard.graftt.collections.mutableIterables
+import net.onedaybeard.graftt.combine
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.AnnotationNode
 import org.objectweb.asm.tree.FieldNode
 
 
 fun FieldNode.annotations(): MutableIterable<AnnotationNode> =
-    mutableIterables(invisibleAnnotations, visibleAnnotations)
+    combine(invisibleAnnotations, visibleAnnotations)
 
 fun FieldNode.hasAnnotation(type: Type) =
     type in visibleAnnotations || type in invisibleAnnotations

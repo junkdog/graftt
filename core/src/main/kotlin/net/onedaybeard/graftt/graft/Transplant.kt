@@ -51,18 +51,18 @@ sealed class Transplant<T> {
      * the transplant if [Graft.Annotations.overwrite] is set.
      */
     fun annotationsToRemove(): List<Type> {
-        val toRemove = annotations()
+        val remove = annotations()
             .readTypes(Graft.Annotations::remove)
             .get() ?: listOf()
 
         return if (overwriteAnnotations) {
-            val overwritten = annotations()
+            val overwrite = annotations()
                 .filterNot(AnnotationNode::isGraftAnnotation)
                 .asTypes()
 
-            (toRemove + overwritten).distinct()
+            (remove + overwrite).distinct()
         } else {
-            toRemove
+            remove
         }
     }
 

@@ -6,6 +6,8 @@ import com.github.michaelbull.result.Result
 import net.onedaybeard.graftt.asm.classNode
 import net.onedaybeard.graftt.asm.classReader
 import net.onedaybeard.graftt.asm.toBytes
+import net.onedaybeard.graftt.collections.MultiIterable
+import net.onedaybeard.graftt.collections.MutableMultiIterable
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.analysis.Analyzer
@@ -27,6 +29,15 @@ val `(╯°□°）╯︵ ┻━┻`: (Msg) -> Nothing = { throw it.toException(
 fun <T> anyOf(vararg predicates: (T) -> Boolean): (T) -> Boolean = { t -> predicates.any { it(t) } }
 fun <T> allOf(vararg predicates: (T) -> Boolean): (T) -> Boolean = { t -> predicates.all { it(t) } }
 fun <T> noneOf(vararg predicates: (T) -> Boolean): (T) -> Boolean = { t -> predicates.none { it(t) } }
+
+/** Combines multiple nullable [MutableIterable] into one */
+@JvmName("combineMutable")
+fun <T> combine(vararg iterables: MutableIterable<T>?): MutableIterable<T>
+    = MutableMultiIterable(iterables.toList())
+
+/** Combines multiple nullable [Iterable] into one */
+fun <T> combine(vararg iterables: Iterable<T>?): Iterable<T>
+    = MultiIterable(iterables.toList())
 
 fun ClassNode.toDebugString(): String {
     val sw = StringWriter()

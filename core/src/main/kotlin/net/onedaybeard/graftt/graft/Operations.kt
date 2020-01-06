@@ -67,7 +67,6 @@ private fun <T> Iterable<T>.copyIntoNullable(destination: KMutableProperty<Mutab
     destination.getter.call()!!.addAll(this)
 }
 
-@Suppress("UnnecessaryVariable")
 private fun <T : Transplant<*>> ClassNode.graftAnnotations(transplant: T): Result<T, Msg> {
     when (val t = transplant.takeIf { it.findRecipientNode(this) != null }) {
         is Transplant.Class  -> {
