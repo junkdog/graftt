@@ -6,6 +6,10 @@ pipeline {
             args '-v /root/.m2:/root/.m2 -u root'
         }
     }
+    environment {
+        VERSION = readMavenPom().getVersion()
+        IS_SNAPSHOT = readMavenPom().getVersion().endsWith("-SNAPSHOT")
+    }
     options {
         skipStagesAfterUnstable()
     }
@@ -16,14 +20,17 @@ pipeline {
     stages {
         stage ('Initialize') {
             steps {
-                sh "echo `whoami`"
-                echo "USER = ${env.USER}"
-                echo "HOME = ${env.HOME}"
-                echo "PATH = ${env.PATH}"
-                echo "M2_HOME = ${env.M2_HOME}"
+                echo "Building ${env.VERSION}"
             }
         }
         stage ('Build and Test') {
+            when {
+                // integration test modules don't update versions with
+                // the maven release plugin; this is done in a separate
+                // commit, so skipping the tests until releases are done
+                // through this pipeline
+                environment name: 'IS_SNAPSHOT', value: 'YES'
+            }
             steps {
                 sh 'mvn clean integration-test -B'
             }
@@ -34,18 +41,21 @@ pipeline {
                 }
             }
         }
-        stage('Install') {
+        stage ('Build (skip tests)') {
             when {
-                not { triggeredBy "TimerTrigger" }
+                environment name: 'IS_SNAPSHOT', value: 'NO'
             }
             steps {
-                sh 'mvn clean install -DskipTests -B'
+                sh 'mvn clean integration-test -DskipTests -B'
+            }
+            post {
+                archiveArtifacts allowEmptyArchive: true, artifacts: '*/target/*.jar'
             }
         }
-        stage('Deploy') {
+        stage('Deploy -SNAPSHOT') {
             when {
                 allOf {
-                    branch 'master'
+                    branch 'develop'
                     triggeredBy 'TimerTrigger'
                 }
             }
