@@ -4,7 +4,7 @@
         <pluginExecution>
             <pluginExecutionFilter>
                 <goals>
-                    <goal>graftt</goal>
+                    <goal>transplant</goal>
                 </goals>
             </pluginExecutionFilter>
             <action>

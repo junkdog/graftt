@@ -32,10 +32,10 @@ private val Pair<String, String>.length: Int
     get() = first.length + second.length
 
 @Mojo(
-    name = "graftt",
+    name = "transplant",
     defaultPhase = PROCESS_CLASSES,
     requiresDependencyResolution = COMPILE_PLUS_RUNTIME)
-class GrafttMojo : AbstractMojo() {
+class TransplanterMojo : AbstractMojo() {
 
     @Parameter(defaultValue = "\${project}", readonly = true, required = true)
     private lateinit var project: MavenProject

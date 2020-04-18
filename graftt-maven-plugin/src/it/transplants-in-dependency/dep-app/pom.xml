@@ -43,7 +43,7 @@
                     <execution>
                         <id>graftt</id>
                         <goals>
-                            <goal>graftt</goal>
+                            <goal>transplant</goal>
                         </goals>
                     </execution>
                 </executions>

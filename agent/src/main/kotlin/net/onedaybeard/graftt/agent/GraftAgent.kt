@@ -1,17 +1,20 @@
 package net.onedaybeard.graftt.agent
 
 import com.github.michaelbull.result.*
-import net.onedaybeard.graftt.*
+import net.onedaybeard.graftt.Msg
 import net.onedaybeard.graftt.asm.classNode
 import net.onedaybeard.graftt.asm.toBytes
+import net.onedaybeard.graftt.classNodes
 import net.onedaybeard.graftt.graft.isTransplant
 import net.onedaybeard.graftt.graft.readRecipientName
 import net.onedaybeard.graftt.graft.transplant
+import net.onedaybeard.graftt.makeLogger
 import org.objectweb.asm.commons.SimpleRemapper
 import org.objectweb.asm.tree.ClassNode
 import java.io.File
 import java.lang.instrument.ClassFileTransformer
 import java.lang.instrument.Instrumentation
+import java.net.URL
 import java.security.ProtectionDomain
 
 
@@ -37,11 +40,15 @@ fun premain(agentArgs: String?, inst: Instrumentation) {
             log.info { "searching for transplants: $root" }
             classNodes(root)
                 .filter(ClassNode::isTransplant)
-                .forEach { cn -> register(cn, readRecipientName(cn).unwrap()) }
+                .forEach(::register)
+        }
+
+        fun register(donor: ClassNode) {
+            register(donor, readRecipientName(donor).unwrap())
         }
 
         fun register(donor: ClassNode, recipient: String) {
-            log.debug { "registering transplant: ${donor.name} -> $recipient" }
+            log.info { "registering transplant: ${donor.name} -> $recipient" }
             transplants[recipient] = donor
             mapping[donor.name] = recipient
         }
@@ -68,9 +75,20 @@ fun premain(agentArgs: String?, inst: Instrumentation) {
             } ?: classfileBuffer
         }
     })
+
+    registerTransplantIndices()
 }
 
-private fun validate(args: Map<String, List<String>>) {
+fun registerTransplantIndices() {
+    loadResources("graftt.transplants")
+        .map { index -> String(index) }
+        .flatMap(String::lines)
+        .filterNot { line -> line.startsWith("#") }
+        .toSet()
+        .map { Class.forName(it) } // registers via classloader
+}
+
+fun validate(args: Map<String, List<String>>) {
     val valid = listOf("classpath", "cp")
 
     val invalid = args.filterKeys { it !in valid }
@@ -79,7 +97,7 @@ private fun validate(args: Map<String, List<String>>) {
 }
 
 /** argument format: `param1=value1,value2;param2=value3` */
-private fun parseArgs(rawArgs: String?): Map<String, List<String>> {
+fun parseArgs(rawArgs: String?): Map<String, List<String>> {
     if (rawArgs == null) return mapOf()
 
     fun String.token(index: Int) = split("=")[index]
@@ -87,4 +105,15 @@ private fun parseArgs(rawArgs: String?): Map<String, List<String>> {
     return rawArgs
         .split(";")
         .associate { s -> s.token(0) to s.token(1).split(",")  }
+}
+
+fun loadResources(
+    name: String,
+    classLoader: ClassLoader = ClassLoader.getSystemClassLoader()
+): List<ByteArray> {
+    return classLoader
+        .getResources(name)
+        .asSequence()
+        .map(URL::readBytes)
+        .toList()
 }

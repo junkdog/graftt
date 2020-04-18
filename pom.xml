@@ -165,8 +165,10 @@
                 <module>graftt-maven-plugin/src/it/transplants-in-target-classes</module>
                 <module>graftt-maven-plugin/src/it/transplants-in-directory</module>
                 <module>graftt-maven-plugin/src/it/transplants-in-dependency</module>
+                <module>graftt-maven-plugin/src/it/generate-index</module>
                 <module>agent/src/it/agent-no-params</module>
                 <module>agent/src/it/external-transplants</module>
+                <module>agent/src/it/transplant-indices</module>
             </modules>
         </profile>
     </profiles>

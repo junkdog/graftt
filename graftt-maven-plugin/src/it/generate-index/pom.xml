@@ -16,7 +16,7 @@
     </properties>
 
 
-    <artifactId>transplants-in-target-classes</artifactId>
+    <artifactId>generate-index</artifactId>
     <packaging>jar</packaging>
     <name>graftt - maven plugin test</name>
 
@@ -63,29 +63,14 @@
                 <executions>
                     <execution>
                         <id>graftt</id>
+                        <!-- usually runs during `prepare-package`,
+                             but for the sake of testing  -->
+                        <phase>generate-test-resources</phase>
                         <goals>
-                            <goal>transplant</goal>
+                            <goal>generate-index</goal>
                         </goals>
                     </execution>
                 </executions>
-                <configuration>
-                    <!-- also exposed as system property -Dgraftt.enable=true
-
-                    <enable>true</enable>
-                    -->
-
-                    <!-- paths to root of class directories or .jar files
-
-                    <paths>
-                        <path>
-                            /path/to/jar
-                        </path>
-                        <path>
-                            /path/to/root/classes/dir/
-                        </path>
-                    </paths>
-                    -->
-                </configuration>
             </plugin>
         </plugins>
     </build>

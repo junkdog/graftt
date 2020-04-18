@@ -2,6 +2,12 @@
 
 ### 0.3.0-SNAPSHOT
 
+#### simplified transplant disocvery
+- `agent` now checks the classpath for any occurances of `/graftt.index`: any transplants
+  listed in indices are automatically registered by the agent. The index files list one
+  transplant per line using the qualified name of the transplant.
+  - `graftt-maven-plugin:generate-index` to automatically generate it during build
+
 - `agent` relocates internal dependencies to allow for merging with external jars 
 - **Fix**: publish [API docs] for `api` artifact
 - **Fix**: Transplant substitution when fusing fields 

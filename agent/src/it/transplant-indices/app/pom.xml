@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>net.onedaybeard.graftt</groupId>
+        <artifactId>transplant-indices</artifactId>
+        <version>0.3.0-SNAPSHOT</version>
+    </parent>
+
+    <properties>
+        <agent>${project.build.directory}/../${local.repo}/${agent.path}/${agent.file}</agent>
+    </properties>
+
+
+    <artifactId>app</artifactId>
+    <packaging>jar</packaging>
+
+
+    <dependencies>
+        <dependency>
+            <groupId>net.onedaybeard.graftt</groupId>
+            <artifactId>base</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- transplants registered from `graftt.transplants` -->
+        <dependency>
+            <groupId>net.onedaybeard.graftt</groupId>
+            <artifactId>foo-transplants</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.onedaybeard.graftt</groupId>
+            <artifactId>bar-transplants</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M3</version>
+                <configuration>
+                    <argLine>-javaagent:${agent}</argLine>
+                    <useSystemClassLoader>false</useSystemClassLoader>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
