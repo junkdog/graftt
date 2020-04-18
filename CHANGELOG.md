@@ -2,6 +2,7 @@
 
 ### 0.3.0-SNAPSHOT
 
+- `agent` relocates internal dependencies to allow for merging with external jars 
 - **Fix**: publish [API docs] for `api` artifact
 - **Fix**: Transplant substitution when fusing fields 
 
