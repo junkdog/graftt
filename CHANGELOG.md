@@ -2,9 +2,12 @@
 
 ### 0.3.0-SNAPSHOT
 
+- **Breaking change**
+  - `graft-maven-plugin`: `graftt` goal now called `transplant`
+
 #### simplified transplant disocvery
 - `agent` now checks the classpath for any occurances of `/graftt.index`: any transplants
-  listed in indices are automatically registered by the agent. The index files list one
+  listed in indices are registered by the agent automatically. The index files list one
   transplant per line using the qualified name of the transplant.
   - `graftt-maven-plugin:generate-index` to automatically generate it during build
 

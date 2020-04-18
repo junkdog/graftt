@@ -84,6 +84,7 @@ fun registerTransplantIndices() {
         .map { index -> String(index) }
         .flatMap(String::lines)
         .filterNot { line -> line.startsWith("#") }
+        .filter(String::isNotBlank)
         .toSet()
         .map { Class.forName(it) } // registers via classloader
 }
