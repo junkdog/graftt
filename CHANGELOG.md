@@ -5,10 +5,10 @@
 ### 0.3.0 - 2020-04-19
 
 #### Breaking changes
-- `graft-maven-plugin`: `graftt` goal now called `transplant`
+- `graftt-maven-plugin`: `graftt` goal renamed to `transplant`
 
 #### Simplified transplant disocovery
-- `agent` now checks the classpath for any occurances of `/graftt.index`: any transplants
+- `agent` now checks the classpath for any occurrences of `/graftt.index`: transplants
   listed in indices are registered by the agent automatically. The index files list one
   transplant per line using the qualified name of the transplant.
   - `graftt-maven-plugin:generate-index` to automatically generate it during build

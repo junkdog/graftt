@@ -142,4 +142,4 @@ implementation "net.onedaybeard.graftt:api:${VERSION}"
 `$ java -ea -javaagent:agent-${VERSION}.jar` ...
 
  - [Snapshot](https://oss.sonatype.org/content/repositories/snapshots/net/onedaybeard/graftt/agent/) 
- - [Release](http://repo1.maven.org/maven2/net/onedaybeard/graftt/agent) 
+ - [Release](https://repo1.maven.org/maven2/net/onedaybeard/graftt/agent) 
