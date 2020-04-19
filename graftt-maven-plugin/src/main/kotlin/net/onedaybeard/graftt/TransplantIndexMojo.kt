@@ -12,7 +12,7 @@ import java.io.File
 
 
 /**
- * Generates a record of all transplants and writes it to`graftt.transplants`.
+ * Generates a record of all transplants and writes it to`graftt.index`.
  * The `agent` reads all indices on start-up to ensure registering the transplants
  * prior to any recipient classes have been invoked.
  */
@@ -30,9 +30,7 @@ class GenerateIndexMojo : AbstractMojo() {
             .filter(ClassNode::isTransplant)
             .map(ClassNode::qualifiedName)
             .joinToString("\n")
-            .let { index ->
-                File(classDir, "graftt.transplants")
-                    .writeText(index)
-            }
+            .takeIf(String::isNotEmpty)
+            ?.let { File(classDir, "graftt.index").writeText(it) }
     }
 }

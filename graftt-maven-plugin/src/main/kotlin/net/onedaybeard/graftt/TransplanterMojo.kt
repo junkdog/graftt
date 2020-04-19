@@ -31,6 +31,10 @@ private const val LINE_WIDTH = 72
 private val Pair<String, String>.length: Int
     get() = first.length + second.length
 
+/**
+ * Applies transplants during build. As such, only compiled classes
+ * are affected.
+ */
 @Mojo(
     name = "transplant",
     defaultPhase = PROCESS_CLASSES,
@@ -46,6 +50,7 @@ class TransplanterMojo : AbstractMojo() {
     @Parameter(property = "graftt.enable", defaultValue = "true")
     private var enable: Boolean = false
 
+    /** additional transplants directory roots or jar files */
     @Parameter
     private var paths: List<File> = listOf()
 

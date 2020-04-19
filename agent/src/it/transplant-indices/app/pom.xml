@@ -26,7 +26,7 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- transplants registered from `graftt.transplants` -->
+        <!-- transplants registered from `graftt.index` -->
         <dependency>
             <groupId>net.onedaybeard.graftt</groupId>
             <artifactId>foo-transplants</artifactId>

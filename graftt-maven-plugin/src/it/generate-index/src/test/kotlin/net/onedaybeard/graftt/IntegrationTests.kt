@@ -8,7 +8,7 @@ class IntegrationTests {
     @Test
     fun `reading transplants from index`() {
         val found = IntegrationTests::class.java
-            .getResourceAsStream("/graftt.transplants")
+            .getResourceAsStream("/graftt.index")
             .readBytes()
             .let { String(it) }
             .lines()
